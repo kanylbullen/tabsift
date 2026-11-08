@@ -1,17 +1,17 @@
-// Adressfältsintegration via chrome.omnibox.
+// Address bar integration via chrome.omnibox.
 //
-// Begränsningen är webbläsarens, inte vår: ett tillägg kan bara delta i
-// adressfältet bakom ett nyckelord. Skriv `t` följt av mellanslag eller Tab, så
-// går varje tangenttryck därefter till oss i stället för till sökmotorn.
-// Webbläsarens egen "Byt till den här fliken"-rankning går fortfarande inte att
-// påverka — det finns inget API för den.
+// The limitation is the browser's, not ours: an extension can only take part in
+// the address bar behind a keyword. Type `t` followed by space or Tab, and every
+// keystroke after that comes to us instead of the search engine. The browser's
+// own "Switch to this tab" ranking still can't be influenced — there is no API.
 //
-// Nyckelordet sätts i manifest.json under "omnibox".keyword och går inte att
-// ändra i körtid.
+// The keyword is set in manifest.json under "omnibox".keyword and can't be
+// changed at runtime.
 
 import { queryTabs, tabUrl, focusTab } from './tabs.js';
 import { displayHost, isNewTabPage } from './urlkey.js';
 import { matchBest } from './fuzzy.js';
+import { t, tn } from './i18n.js';
 
 const MAX_SUGGESTIONS = 8;
 const TITLE_MAX = 80;
@@ -20,7 +20,7 @@ const CACHE_MS = 2000;
 let cache = { at: 0, tabs: [] };
 let lastRanked = [];
 
-/** De fem fördefinierade XML-entiteterna måste escapas i description. */
+/** The five predefined XML entities must be escaped in a description. */
 export function escapeXml(text) {
   return String(text)
     .replace(/&/g, '&amp;')
@@ -35,8 +35,8 @@ function truncate(text, max) {
 }
 
 /**
- * Bygger en description med <match> runt träffade tecken. Escapar först,
- * taggar sedan — aldrig tvärtom, annars kan en flikrubrik injicera markup.
+ * Builds a description with <match> around matched characters. Escape first,
+ * then tag — never the other way round, or a tab title could inject markup.
  */
 export function describe(title, host, positions = []) {
   const shown = truncate(title, TITLE_MAX);
@@ -66,7 +66,7 @@ export function describe(title, host, positions = []) {
 }
 
 /**
- * Rangordnar flikar mot en fråga. Ren funktion — testbar utan webbläsare.
+ * Ranks tabs against a query. Pure function — testable without a browser.
  * @param {{id:number,title:string,url:string,lastAccessed?:number}[]} tabs
  * @returns {{tabId:number, content:string, description:string}[]}
  */
@@ -107,7 +107,7 @@ export function buildSuggestions(tabs, query) {
 async function currentTabs() {
   const now = Date.now();
   if (now - cache.at < CACHE_MS && cache.tabs.length) return cache.tabs;
-  // Alla fönster: poängen med adressfältet är att hitta fliken oavsett var den ligger.
+  // All windows: the point of the address bar is finding the tab wherever it is.
   cache = { at: now, tabs: await queryTabs({ allWindows: true }) };
   return cache.tabs;
 }
@@ -116,7 +116,7 @@ export function registerOmnibox() {
   if (!chrome.omnibox) return;
 
   chrome.omnibox.setDefaultSuggestion({
-    description: 'Sök bland öppna flikar — <dim>skriv för att filtrera, Enter byter flik</dim>',
+    description: `${escapeXml(t('omni_default'))} — <dim>${escapeXml(t('omni_default_hint'))}</dim>`,
   });
 
   chrome.omnibox.onInputStarted.addListener(() => {
@@ -131,18 +131,18 @@ export function registerOmnibox() {
 
     chrome.omnibox.setDefaultSuggestion({
       description: suggestions.length
-        ? `Byt till <match>${escapeXml(truncate(text.trim() || 'senaste fliken', 40))}</match> <dim>— ${suggestions.length} träffar</dim>`
-        : `<dim>Ingen öppen flik matchar</dim> <match>${escapeXml(truncate(text.trim(), 40))}</match>`,
+        ? `${escapeXml(t('omni_switch_to'))} <match>${escapeXml(truncate(text.trim() || t('omni_recent'), 40))}</match> <dim>— ${escapeXml(tn('omni_hits', suggestions.length))}</dim>`
+        : `<dim>${escapeXml(t('omni_no_match'))}</dim> <match>${escapeXml(truncate(text.trim(), 40))}</match>`,
     });
 
-    // Det första förslaget hamnar under den icke-valbara standardraden, så vi
-    // skickar med alla — inklusive topträffen.
+    // The first suggestion lands below the non-selectable default row, so we
+    // send all of them — including the top hit.
     suggest(suggestions.map(({ content, description }) => ({ content, description })));
   });
 
   chrome.omnibox.onInputEntered.addListener(async (text) => {
-    // Valde användaren ett förslag är text === dess content. Tryckte hen bara
-    // Enter på standardraden får vi den råa frågan — ta topträffen då.
+    // If the user picked a suggestion, text === its content. If they just pressed
+    // Enter on the default row we get the raw query — take the top hit then.
     const picked =
       lastRanked.find((s) => s.content === text) ??
       (lastRanked.length ? lastRanked[0] : null);
@@ -153,7 +153,7 @@ export function registerOmnibox() {
       const tab = await chrome.tabs.get(picked.tabId);
       await focusTab(tab.id, tab.windowId);
     } catch {
-      // Fliken hann stängas mellan förslaget och Enter.
+      // The tab was closed between the suggestion and Enter.
     }
   });
 

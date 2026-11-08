@@ -1,6 +1,6 @@
-// Minimal fuzzy-matchning för flikpaletten. Delsekvensmatchning med bonus för
-// sammanhängande träffar och ordgränser — samma idé som i de flesta
-// kommandopaletter, men liten nog att läsa igenom.
+// Minimal fuzzy matching for the tab palette. Subsequence matching with bonuses
+// for consecutive hits and word boundaries — the same idea as most command
+// palettes, but small enough to read through.
 
 const SEQUENTIAL_BONUS = 12;
 const BOUNDARY_BONUS = 9;
@@ -8,7 +8,7 @@ const PREFIX_BONUS = 6;
 const GAP_PENALTY = -1;
 
 /**
- * @returns {{score: number, positions: number[]} | null} null = ingen träff
+ * @returns {{score: number, positions: number[]} | null} null = no match
  */
 export function match(query, text) {
   if (!query) return { score: 0, positions: [] };
@@ -24,7 +24,7 @@ export function match(query, text) {
 
   for (let qi = 0; qi < q.length; qi++) {
     const ch = q[qi];
-    if (ch === ' ') continue; // mellanslag delar upp söktermer, matchar inte
+    if (ch === ' ') continue; // spaces separate search terms, they don't match
 
     let found = -1;
     for (let i = ti; i < t.length; i++) {
@@ -46,13 +46,13 @@ export function match(query, text) {
     ti = found + 1;
   }
 
-  // Kortare träffsträngar rankas högre vid lika poäng.
+  // Shorter matching strings rank higher on equal score.
   score -= Math.min(text.length, 200) * 0.05;
   return { score, positions };
 }
 
 /**
- * Matchar mot flera fält och tar det bästa resultatet.
+ * Matches against several fields and takes the best result.
  * @param {string} query
  * @param {{text: string, weight?: number}[]} fields
  */

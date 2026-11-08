@@ -1,0 +1,619 @@
+{
+  "ext_description": {
+    "message": "Flikpalett, dubblettstädning, förslag på inaktiva flikar och semantisk gruppering. Lokal AI eller egen nyckel. Ingen telemetri."
+  },
+  "action_title": {
+    "message": "Tabsift (Ctrl+Shift+K)"
+  },
+  "cmd_palette": {
+    "message": "Öppna flikpaletten"
+  },
+  "cmd_dedupe": {
+    "message": "Stäng dubblettflikar"
+  },
+  "cmd_group": {
+    "message": "Gruppera flikar"
+  },
+  "search_placeholder": {
+    "message": "Sök bland öppna flikar…"
+  },
+  "tabs_list_label": {
+    "message": "Flikar"
+  },
+  "btn_dedupe": {
+    "message": "Dubbletter"
+  },
+  "btn_group": {
+    "message": "Gruppera"
+  },
+  "btn_stale": {
+    "message": "Inaktiva"
+  },
+  "btn_undo": {
+    "message": "Ångra"
+  },
+  "btn_undo_count": {
+    "message": "Ångra ($P1$)",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "btn_cancel": {
+    "message": "Avbryt"
+  },
+  "btn_settings": {
+    "message": "Inställningar"
+  },
+  "count_tabs_one": {
+    "message": "flik"
+  },
+  "count_tabs_other": {
+    "message": "flikar"
+  },
+  "count_dupes_one": {
+    "message": "dubblett"
+  },
+  "count_dupes_other": {
+    "message": "dubbletter"
+  },
+  "count_stale": {
+    "message": "inaktiva > $P1$ d",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "count_ai_off": {
+    "message": "AI av"
+  },
+  "no_match": {
+    "message": "Ingen flik matchar."
+  },
+  "chip_pinned": {
+    "message": "fäst"
+  },
+  "chip_audio": {
+    "message": "ljud"
+  },
+  "chip_dupe": {
+    "message": "dubblett"
+  },
+  "close_tab": {
+    "message": "Stäng fliken"
+  },
+  "copies": {
+    "message": "$P1$ kopior",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "keep": {
+    "message": "behåll"
+  },
+  "no_dupes": {
+    "message": "Inga dubbletter hittades."
+  },
+  "nothing_to_group": {
+    "message": "Inget att gruppera."
+  },
+  "source_ai": {
+    "message": "AI"
+  },
+  "source_rule": {
+    "message": "regel"
+  },
+  "and_more": {
+    "message": "… och $P1$ till",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stale_none": {
+    "message": "Ingen flik har varit inaktiv i mer än $P1$ dagar.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "stale_checkbox": {
+    "message": "Stäng den här fliken"
+  },
+  "close_n_one": {
+    "message": "Stäng $P1$ flik",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "close_n_other": {
+    "message": "Stäng $P1$ flikar",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "nothing_to_close": {
+    "message": "Inget att stänga"
+  },
+  "group_n_one": {
+    "message": "Gruppera $P1$ flik",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "group_n_other": {
+    "message": "Gruppera $P1$ flikar",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "analyzing": {
+    "message": "Analyserar flikar…"
+  },
+  "ai_used": {
+    "message": "AI användes för de flikar reglerna missade."
+  },
+  "closed_n_one": {
+    "message": "Stängde $P1$ flik.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "closed_n_other": {
+    "message": "Stängde $P1$ flikar.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "closed_stale_one": {
+    "message": "Stängde $P1$ inaktiv flik.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "closed_stale_other": {
+    "message": "Stängde $P1$ inaktiva flikar.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "closed_none": {
+    "message": "Inga flikar stängdes."
+  },
+  "grouped_result": {
+    "message": "Grupperade $P1$ flikar i $P2$ nya grupper.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "reopened_one": {
+    "message": "Öppnade $P1$ flik igen.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "reopened_other": {
+    "message": "Öppnade $P1$ flikar igen.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "age_hours": {
+    "message": "$P1$ tim",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "age_days_one": {
+    "message": "$P1$ dag",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "age_days_other": {
+    "message": "$P1$ dagar",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "age_weeks": {
+    "message": "$P1$ veckor",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "age_months": {
+    "message": "$P1$ mån",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "cat_code": {
+    "message": "Kod"
+  },
+  "cat_ai": {
+    "message": "AI"
+  },
+  "cat_cloud": {
+    "message": "Molndrift"
+  },
+  "cat_m365": {
+    "message": "Microsoft 365"
+  },
+  "cat_google": {
+    "message": "Google"
+  },
+  "cat_projects": {
+    "message": "Projekt"
+  },
+  "cat_chat": {
+    "message": "Kommunikation"
+  },
+  "cat_video": {
+    "message": "Video"
+  },
+  "cat_social": {
+    "message": "Socialt"
+  },
+  "cat_shopping": {
+    "message": "Handel"
+  },
+  "cat_finance": {
+    "message": "Ekonomi"
+  },
+  "cat_news": {
+    "message": "Nyheter"
+  },
+  "cat_reference": {
+    "message": "Referens"
+  },
+  "cat_local": {
+    "message": "Lokalt"
+  },
+  "omni_default": {
+    "message": "Sök bland öppna flikar"
+  },
+  "omni_default_hint": {
+    "message": "skriv för att filtrera, Enter byter flik"
+  },
+  "omni_switch_to": {
+    "message": "Byt till"
+  },
+  "omni_recent": {
+    "message": "senaste fliken"
+  },
+  "omni_hits_one": {
+    "message": "$P1$ träff",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "omni_hits_other": {
+    "message": "$P1$ träffar",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "omni_no_match": {
+    "message": "Ingen öppen flik matchar"
+  },
+  "ai_capped": {
+    "message": "Endast de $P1$ första ogrupperade flikarna skickades till AI:n.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "ai_none": {
+    "message": "Ingen AI-backend vald."
+  },
+  "ai_not_configured": {
+    "message": "$P1$ är inte färdigkonfigurerad — se inställningarna.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "ai_not_json": {
+    "message": "Modellen svarade inte med JSON."
+  },
+  "provider_ollama": {
+    "message": "Ollama (lokal)"
+  },
+  "provider_openai": {
+    "message": "OpenAI-kompatibel endpoint"
+  },
+  "provider_anthropic": {
+    "message": "Anthropic (egen nyckel)"
+  },
+  "provider_edge": {
+    "message": "Edge inbyggd AI (Prompt API)"
+  },
+  "err_unreachable": {
+    "message": "Nådde inte $P1$: $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "err_status": {
+    "message": "$P1$ svarade $P2$: $P3$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      }
+    }
+  },
+  "err_status_short": {
+    "message": "$P1$ svarade $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "err_anthropic_401": {
+    "message": "Anthropic avvisade nyckeln (401)."
+  },
+  "err_anthropic_429": {
+    "message": "Anthropic: rate limit (429). Försök igen om en stund."
+  },
+  "err_anthropic_refusal": {
+    "message": "Anthropic avböjde förfrågan (stop_reason: refusal)."
+  },
+  "err_anthropic_no_text": {
+    "message": "Anthropic returnerade inget textsvar."
+  },
+  "err_ollama_unreachable": {
+    "message": "Nådde inte Ollama på $P1$. Kör servern och tillåt tilläggets origin via OLLAMA_ORIGINS. ($P2$)",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "err_edge_missing": {
+    "message": "LanguageModel saknas. Kräver Edge Canary/Dev med flaggan \"Prompt API for on-device language model\" påslagen."
+  },
+  "err_edge_hardware": {
+    "message": "Enheten uppfyller inte hårdvarukraven för den inbyggda modellen."
+  },
+  "model_opus": {
+    "message": "Claude Opus 5 — bäst kvalitet"
+  },
+  "model_sonnet": {
+    "message": "Claude Sonnet 5"
+  },
+  "model_haiku": {
+    "message": "Claude Haiku 4.5 — billigast"
+  },
+  "opt_title": {
+    "message": "Tabsift — inställningar"
+  },
+  "opt_lede": {
+    "message": "Fuzzy flikpalett, dubblettstädning, förslag på inaktiva flikar och semantisk gruppering. AI är valfri — allt utom gruppering av okända sajter fungerar utan."
+  },
+  "opt_perm_h": {
+    "message": "Behörigheter"
+  },
+  "opt_perm_p": {
+    "message": "Tillägget begär `tabs`, `tabGroups`, `storage` och `commands`. Inga content scripts, ingen `<all_urls>`, ingen historik, inga bokmärken, ingen telemetri. Nätverksanrop görs bara till den AI-endpoint du själv väljer nedan, och behörigheten för den frågas separat."
+  },
+  "opt_ai_h": {
+    "message": "AI-backend"
+  },
+  "opt_provider": {
+    "message": "Leverantör"
+  },
+  "opt_provider_none": {
+    "message": "Ingen — bara regler (rekommenderat att börja med)"
+  },
+  "opt_provider_ollama": {
+    "message": "Ollama (lokal modell)"
+  },
+  "opt_provider_edge": {
+    "message": "Edge inbyggd AI (Prompt API, Canary/Dev)"
+  },
+  "opt_provider_openai": {
+    "message": "OpenAI-kompatibel endpoint"
+  },
+  "opt_provider_anthropic": {
+    "message": "Anthropic (egen nyckel)"
+  },
+  "opt_base_url": {
+    "message": "Bas-URL"
+  },
+  "opt_model": {
+    "message": "Modell"
+  },
+  "opt_api_key": {
+    "message": "API-nyckel"
+  },
+  "opt_ollama_hint": {
+    "message": "Ollama blockerar tillägg via CORS som standard. Starta servern med kommandot nedan för att tillåta det här tillägget:"
+  },
+  "opt_openai_hint": {
+    "message": "Fungerar mot OpenAI, LM Studio, llama.cpp och OpenRouter. Lokala servrar behöver ingen nyckel. Egna domäner måste läggas till i `optional_host_permissions` i `manifest.json`."
+  },
+  "opt_anthropic_hint": {
+    "message": "Nyckeln ligger i tilläggets lokala lagring, inte i en server. Använd en separat, återkallningsbar nyckel — inte din huvudnyckel. Flikrubriker och domäner skickas till Anthropic vid gruppering."
+  },
+  "opt_edge_hint": {
+    "message": "Kräver Edge Canary eller Dev med flaggan `Prompt API for on-device language model` påslagen i `edge://flags`, samt tillräcklig hårdvara. Inget lämnar maskinen."
+  },
+  "opt_grant": {
+    "message": "Ge nätverksåtkomst"
+  },
+  "opt_test": {
+    "message": "Testa anslutningen"
+  },
+  "opt_dedupe_h": {
+    "message": "Dubbletter"
+  },
+  "opt_d_hash": {
+    "message": "Ignorera `#fragment`"
+  },
+  "opt_d_tracking": {
+    "message": "Strunta i spårningsparametrar (`utm_*`, `fbclid`, …)"
+  },
+  "opt_d_slash": {
+    "message": "Ignorera avslutande snedstreck"
+  },
+  "opt_d_newtab": {
+    "message": "Räkna tomma nya flikar som dubbletter"
+  },
+  "opt_all_windows": {
+    "message": "Sök i alla fönster, inte bara det aktiva"
+  },
+  "opt_dedupe_hint": {
+    "message": "Fästa flikar stängs aldrig. Senaste städningen går alltid att ångra från paletten."
+  },
+  "opt_stale_h": {
+    "message": "Inaktiva flikar"
+  },
+  "opt_s_days": {
+    "message": "Föreslå flikar som inte använts på (dagar)"
+  },
+  "opt_s_grouped": {
+    "message": "Ta med flikar som ligger i en grupp"
+  },
+  "opt_stale_hint": {
+    "message": "Inget stängs utan förhandsvisning ([[Ctrl+I]] i paletten). Fästa, aktiva och ljudspelande flikar föreslås aldrig."
+  },
+  "opt_group_h": {
+    "message": "Gruppering"
+  },
+  "opt_g_rules": {
+    "message": "Använd de inbyggda domänreglerna först"
+  },
+  "opt_g_ungrouped": {
+    "message": "Rör bara flikar som inte redan ligger i en grupp"
+  },
+  "opt_g_collapse": {
+    "message": "Fäll ihop nya grupper"
+  },
+  "opt_g_windows": {
+    "message": "Gruppera över alla fönster"
+  },
+  "opt_g_max": {
+    "message": "Max antal flikar per AI-anrop"
+  },
+  "opt_keys_h": {
+    "message": "Kortkommandon"
+  },
+  "opt_keys_p": {
+    "message": "[[Ctrl+Shift+K]] öppnar paletten, [[Ctrl+Shift+U]] städar dubbletter. Grupperingskommandot saknar standardtangent."
+  },
+  "opt_keys_btn": {
+    "message": "Ändra kortkommandon"
+  },
+  "opt_saved": {
+    "message": "Sparat"
+  },
+  "opt_edge_missing": {
+    "message": "LanguageModel saknas — fel Edge-kanal eller flaggan är av."
+  },
+  "opt_edge_unavailable": {
+    "message": "Enheten uppfyller inte hårdvarukraven."
+  },
+  "opt_edge_downloadable": {
+    "message": "Tillgänglig, modellen laddas ner vid första användningen."
+  },
+  "opt_edge_downloading": {
+    "message": "Modellen laddas ner just nu."
+  },
+  "opt_edge_available": {
+    "message": "Klar att användas."
+  },
+  "opt_no_perm_needed": {
+    "message": "Ingen nätverksbehörighet behövs."
+  },
+  "opt_granted": {
+    "message": "Beviljad: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_denied": {
+    "message": "Behörigheten nekades."
+  },
+  "opt_testing": {
+    "message": "Testar…"
+  },
+  "opt_test_ok": {
+    "message": "OK — modellen föreslog: $P1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_test_empty": {
+    "message": "Svar mottaget men utan gruppindelning."
+  }
+}

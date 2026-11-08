@@ -100,7 +100,7 @@ main { flex: 1; overflow-y: auto; min-height: 120px; }
 .row:hover .close, .row[aria-selected="true"] .close { visibility: visible; }
 .close:hover { color: var(--danger); background: var(--chip); }
 
-/* Förhandsvyer för dubbletter och gruppering */
+/* Previews for duplicates, inactive tabs and grouping */
 .section { padding: 8px 12px 4px; }
 .section h2 {
   margin: 0 0 2px; font-size: 12px; font-weight: 600;
@@ -116,7 +116,7 @@ main { flex: 1; overflow-y: auto; min-height: 120px; }
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .section li.gone { text-decoration: line-through; opacity: .65; }
-.section li.kept::before { content: "behåll "; color: var(--ok); }
+.section li.kept .keep-label { color: var(--ok); }
 
 .empty { padding: 26px 16px; text-align: center; color: var(--muted); }
 

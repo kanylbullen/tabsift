@@ -3,11 +3,12 @@ import { getProvider, ensurePermissions, classify } from '../lib/ai/index.js';
 import { MODELS as ANTHROPIC_MODELS } from '../lib/ai/anthropic.js';
 import { listModels as listOllamaModels } from '../lib/ai/ollama.js';
 import { availability as edgeAvailability } from '../lib/ai/edge.js';
+import { t, localizeDocument } from '../lib/i18n.js';
 
 const $ = (id) => document.getElementById(id);
 let settings;
 
-// ------------------------------------------------------------------- laddning
+// ---------------------------------------------------------------------- load
 
 function fillAnthropicModels() {
   const select = $('anthropic-model');
@@ -15,7 +16,7 @@ function fillAnthropicModels() {
   for (const m of ANTHROPIC_MODELS) {
     const opt = document.createElement('option');
     opt.value = m.id;
-    opt.textContent = m.label;
+    opt.textContent = t(m.labelKey);
     select.appendChild(opt);
   }
 }
@@ -112,11 +113,11 @@ function setStatus(el, text, kind = '') {
 async function showEdgeStatus() {
   const state = await edgeAvailability();
   const map = {
-    missing: ['LanguageModel saknas — fel Edge-kanal eller flaggan är av.', 'error'],
-    unavailable: ['Enheten uppfyller inte hårdvarukraven.', 'error'],
-    downloadable: ['Tillgänglig, modellen laddas ner vid första användningen.', ''],
-    downloading: ['Modellen laddas ner just nu.', ''],
-    available: ['Klar att användas.', 'ok'],
+    missing: [t('opt_edge_missing'), 'error'],
+    unavailable: [t('opt_edge_unavailable'), 'error'],
+    downloadable: [t('opt_edge_downloadable'), ''],
+    downloading: [t('opt_edge_downloading'), ''],
+    available: [t('opt_edge_available'), 'ok'],
   };
   const [text, kind] = map[state] ?? [state, ''];
   setStatus($('edge-status'), text, kind);
@@ -130,21 +131,21 @@ async function persist() {
   saveTimer = setTimeout(() => ($('saved').hidden = true), 1200);
 }
 
-// ---------------------------------------------------------------- handlingar
+// ------------------------------------------------------------------- actions
 
 $('btn-permission').addEventListener('click', async () => {
   await persist();
   const provider = getProvider(settings.provider);
   const origins = provider?.hostPermissions(settings) ?? [];
   if (!origins.length) {
-    setStatus($('test-status'), 'Ingen nätverksbehörighet behövs.', 'ok');
+    setStatus($('test-status'), t('opt_no_perm_needed'), 'ok');
     return;
   }
   try {
     const granted = await ensurePermissions(settings);
     setStatus(
       $('test-status'),
-      granted ? `Beviljad: ${origins.join(', ')}` : 'Behörigheten nekades.',
+      granted ? t('opt_granted', origins.join(', ')) : t('opt_denied'),
       granted ? 'ok' : 'error',
     );
   } catch (err) {
@@ -154,24 +155,24 @@ $('btn-permission').addEventListener('click', async () => {
 
 $('btn-test').addEventListener('click', async () => {
   await persist();
-  setStatus($('test-status'), 'Testar…');
+  setStatus($('test-status'), t('opt_testing'));
   try {
     const result = await classify(
       settings,
       [
         { title: 'Pull request #412 — fix auth redirect', host: 'github.com' },
         { title: 'OAuth 2.0 redirect_uri mismatch', host: 'stackoverflow.com' },
-        { title: 'Veckans erbjudanden', host: 'ica.se' },
+        { title: 'Weekly deals', host: 'ica.se' },
       ],
       [],
-      ['Kod', 'Handel'],
+      [t('cat_code'), t('cat_shopping')],
     );
     const names = [...new Set(result.values())];
     setStatus(
       $('test-status'),
       names.length
-        ? `OK — modellen föreslog: ${names.join(', ')}`
-        : 'Svar mottaget men utan gruppindelning.',
+        ? t('opt_test_ok', names.join(', '))
+        : t('opt_test_empty'),
       names.length ? 'ok' : 'error',
     );
   } catch (err) {
@@ -191,8 +192,8 @@ $('ollama-url').addEventListener('blur', async () => {
       list.appendChild(opt);
     }
   } catch {
-    // Servern kanske inte kör än, eller så saknas behörighet. Tyst — knappen
-    // "Testa anslutningen" ger ett riktigt felmeddelande när användaren vill.
+    // The server may not be running yet, or permission is missing. Stay quiet —
+    // the "Test connection" button gives a real error when the user asks.
   }
 });
 
@@ -212,6 +213,8 @@ for (const el of document.querySelectorAll('input, select')) {
 }
 
 (async () => {
+  localizeDocument();
+  document.title = t('opt_title');
   fillAnthropicModels();
   settings = await getSettings();
   fillForm();

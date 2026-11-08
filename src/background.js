@@ -1,14 +1,14 @@
-// Service worker. Håller bara i tangentbordskommandona — paletten gör allt
-// annat själv i sin egen popup-kontext, så det finns ingen meddelandekanal
-// att missbruka och inget tillstånd som kan bli inaktuellt.
+// Service worker. Only handles keyboard commands — the palette does everything
+// else itself in its own popup context, so there is no message channel to abuse
+// and no state that can go stale.
 
 import { getSettings } from './lib/settings.js';
 import { queryTabs, planDedupe, applyDedupe, applyGrouping } from './lib/tabs.js';
 import { planGrouping } from './lib/grouping.js';
 import { registerOmnibox } from './lib/omnibox.js';
 
-// Måste registreras synkront vid modulens topp — annars väcks inte service
-// workern när användaren skriver nyckelordet i adressfältet.
+// Must be registered synchronously at the top of the module — otherwise the
+// service worker isn't woken when the user types the keyword in the address bar.
 registerOmnibox();
 
 async function flashBadge(text, color = '#2563eb') {
