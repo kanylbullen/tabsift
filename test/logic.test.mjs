@@ -1,50 +1,71 @@
+import { readFileSync, readdirSync } from 'node:fs';
 import { normalizeUrl, isNewTabPage } from '../src/lib/urlkey.js';
 import { matchBest } from '../src/lib/fuzzy.js';
 import { categorize } from '../src/lib/rules.js';
 import { planDedupe, planStale, formatAge, colorFor } from '../src/lib/tabs.js';
 import { escapeXml, describe as omniDescribe, buildSuggestions } from '../src/lib/omnibox.js';
 
+// chrome.i18n stand-in with the same substitution rules as the browser:
+// $NAME$ -> the placeholder's content, whose $1..$9 -> the substitutions.
+const catalog = (lang) =>
+  JSON.parse(readFileSync(new URL(`../_locales/${lang}/messages.json`, import.meta.url)));
+function fakeI18n(lang) {
+  const msgs = catalog(lang);
+  return {
+    getUILanguage: () => lang,
+    getMessage(key, subs = []) {
+      const m = msgs[key];
+      if (!m) return '';
+      return m.message.replace(/\$([A-Za-z0-9_]+)\$/g, (_, name) => {
+        const ph = m.placeholders?.[name.toLowerCase()];
+        return ph ? ph.content.replace(/\$(\d)/g, (_, n) => subs[n - 1] ?? '') : '';
+      });
+    },
+  };
+}
+globalThis.chrome = { i18n: fakeI18n('en') };
+
 let fail = 0;
 const eq = (name, a, b) => {
   const ok = JSON.stringify(a) === JSON.stringify(b);
-  if (!ok) { console.log(`FAIL ${name}\n  fick     ${JSON.stringify(a)}\n  förväntat ${JSON.stringify(b)}`); fail++; }
+  if (!ok) { console.log(`FAIL ${name}\n  got      ${JSON.stringify(a)}\n  expected ${JSON.stringify(b)}`); fail++; }
   else console.log(`ok   ${name}`);
 };
 
 const O = { ignoreHash: true, stripTracking: true, ignoreTrailingSlash: true };
 
-// --- URL-normalisering
-eq('www + http/https likställs',
+// --- URL normalization
+eq('www + http/https treated as equal',
   normalizeUrl('http://www.example.com/a/', O), normalizeUrl('https://example.com/a', O));
-eq('utm strippas',
+eq('utm is stripped',
   normalizeUrl('https://x.se/p?utm_source=nl&id=7', O), 'https://x.se/p?id=7');
-eq('query sorteras',
+eq('query is sorted',
   normalizeUrl('https://x.se/p?b=2&a=1', O), normalizeUrl('https://x.se/p?a=1&b=2', O));
-eq('fragment ignoreras',
+eq('fragment is ignored',
   normalizeUrl('https://x.se/p#top', O), 'https://x.se/p');
-eq('fragment behålls när det är avstängt',
+eq('fragment kept when the option is off',
   normalizeUrl('https://x.se/p#top', {...O, ignoreHash:false}), 'https://x.se/p#top');
-eq('olika sidor blandas inte ihop',
+eq('different pages are not mixed up',
   normalizeUrl('https://x.se/a', O) === normalizeUrl('https://x.se/b', O), false);
-eq('port bevaras',
+eq('port is preserved',
   normalizeUrl('http://localhost:3000/x', O), 'https://localhost:3000/x');
-eq('nya fliken känns igen', isNewTabPage('edge://newtab/'), true);
+eq('new tab page is recognized', isNewTabPage('edge://newtab/'), true);
 
-// --- regler
-eq('github -> Kod', categorize('https://github.com/foo/bar'), 'Kod');
-eq('subdomän matchar', categorize('https://gist.github.com/x'), 'Kod');
-eq('localhost -> Lokalt', categorize('http://localhost:5173/'), 'Lokalt');
-eq('okänd domän -> null', categorize('https://nagot-slumpmassigt.example/'), null);
-eq('github.com.evil.se matchar INTE', categorize('https://github.com.evil.se/x'), null);
+// --- rules
+eq('github -> Code', categorize('https://github.com/foo/bar'), 'Code');
+eq('subdomain matches', categorize('https://gist.github.com/x'), 'Code');
+eq('localhost -> Local', categorize('http://localhost:5173/'), 'Local');
+eq('unknown domain -> null', categorize('https://something-random.example/'), null);
+eq('github.com.evil.se does NOT match', categorize('https://github.com.evil.se/x'), null);
 
 // --- fuzzy
-eq('fuzzy matchar delsekvens', !!matchBest('gh', [{text:'GitHub'}]), true);
-eq('fuzzy nekar icke-träff', matchBest('zzz', [{text:'GitHub'}]), null);
+eq('fuzzy matches a subsequence', !!matchBest('gh', [{text:'GitHub'}]), true);
+eq('fuzzy rejects a non-match', matchBest('zzz', [{text:'GitHub'}]), null);
 const a = matchBest('git', [{text:'GitHub — pull request'}]).score;
-const b = matchBest('git', [{text:'Nagot om digital signering'}]).score;
-eq('prefixträff rankas högre än inbäddad', a > b, true);
+const b = matchBest('git', [{text:'Something about digital signing'}]).score;
+eq('prefix match ranks above embedded match', a > b, true);
 
-// --- dedupe-plan
+// --- dedupe plan
 const t = (id, url, extra={}) => ({ id, url, windowId: 1, index: id, pinned:false, active:false, audible:false, groupId:-1, lastAccessed: id*1000, title:'t'+id, ...extra });
 const plan = planDedupe([
   t(1, 'https://example.com/a'),
@@ -53,27 +74,27 @@ const plan = planDedupe([
   t(4, 'edge://newtab/'),
   t(5, 'edge://newtab/'),
 ], { ...O, includeNewTabPages: false });
-eq('en dubblettmängd hittad', plan.length, 1);
-eq('senast använda behålls', plan[0].keep.id, 2);
-eq('en flik markerad för stängning', plan[0].close.map(x=>x.id), [1]);
+eq('one duplicate set found', plan.length, 1);
+eq('most recently used is kept', plan[0].keep.id, 2);
+eq('one tab marked for closing', plan[0].close.map(x=>x.id), [1]);
 
 const pinnedPlan = planDedupe([
   t(1, 'https://example.com/a', { pinned:true }),
   t(2, 'https://example.com/a'),
 ], O);
-eq('fäst flik behålls', pinnedPlan[0].keep.id, 1);
-eq('fäst flik stängs aldrig', pinnedPlan[0].close.map(x=>x.id), [2]);
+eq('pinned tab is kept', pinnedPlan[0].keep.id, 1);
+eq('pinned tab is never closed', pinnedPlan[0].close.map(x=>x.id), [2]);
 
 const bothPinned = planDedupe([
   t(1, 'https://example.com/a', { pinned:true }),
   t(2, 'https://example.com/a', { pinned:true }),
 ], O);
-eq('två fästa dubbletter -> ingen åtgärd', bothPinned.length, 0);
+eq('two pinned duplicates -> no action', bothPinned.length, 0);
 
 const withNewTabs = planDedupe([t(4,'edge://newtab/'), t(5,'edge://newtab/')], { ...O, includeNewTabPages: true });
-eq('nya flikar dedupas när inställningen är på', withNewTabs.length, 1);
+eq('new tabs are deduped when the option is on', withNewTabs.length, 1);
 
-// --- inaktiva flikar
+// --- inactive tabs
 const DAY = 86_400_000;
 const NOW = 100 * DAY;
 const ago = (d) => NOW - d * DAY;
@@ -88,49 +109,80 @@ const staleTabs = [
   t(8, 'https://h.se/', { lastAccessed: undefined }),
   t(9, 'https://i.se/', { lastAccessed: 0 }),
 ];
-eq('inaktiva äldst först, bara över gränsen',
+eq('inactive oldest first, only past the threshold',
   planStale(staleTabs, NOW, { days: 7 }).map(x=>x.id), [2, 1]);
-eq('fäst, aktiv och ljud föreslås aldrig',
+eq('pinned, active and audible are never suggested',
   planStale(staleTabs, NOW, { days: 7, includeGrouped: true }).map(x=>x.id), [7, 2, 1]);
-eq('flik utan tidsstämpel föreslås aldrig',
+eq('tab without timestamp is never suggested',
   planStale(staleTabs, NOW, { days: 1 }).some(x => x.id === 8 || x.id === 9), false);
-eq('exakt på gränsen räknas som inaktiv',
+eq('exactly at the threshold counts as inactive',
   planStale([t(1, 'https://a.se/', { lastAccessed: ago(7) })], NOW, { days: 7 }).length, 1);
-eq('ogiltigt antal dagar föreslår inget',
+eq('invalid day count suggests nothing',
   planStale(staleTabs, NOW, { days: 0 }).length, 0);
-eq('ålder i timmar', formatAge(5 * 3_600_000), '5 tim');
-eq('ålder en dag', formatAge(DAY), '1 dag');
-eq('ålder i dagar', formatAge(10 * DAY), '10 dagar');
-eq('ålder i veckor', formatAge(30 * DAY), '4 veckor');
-eq('ålder i månader', formatAge(90 * DAY), '3 mån');
+eq('age in hours', formatAge(5 * 3_600_000), '5 h');
+eq('age one day', formatAge(DAY), '1 day');
+eq('age in days', formatAge(10 * DAY), '10 days');
+eq('age in weeks', formatAge(30 * DAY), '4 weeks');
+eq('age in months', formatAge(90 * DAY), '3 mo');
 
-// --- färger
-eq('färg är deterministisk', colorFor('Kod'), colorFor('Kod'));
+// --- colors
+eq('color is deterministic', colorFor('Code'), colorFor('Code'));
 
 // --- omnibox
-eq('escapar alla fem XML-entiteter',
+eq('escapes all five XML entities',
   escapeXml(`&<>"'`), '&amp;&lt;&gt;&quot;&apos;');
-eq('flikrubrik kan inte injicera markup',
-  omniDescribe('Ondska <match>fejk</match> & co', 'x.se').includes('&lt;match&gt;'), true);
-eq('injicerad tagg blir text, inte markup',
+eq('tab title cannot inject markup',
+  omniDescribe('Evil <match>fake</match> & co', 'x.se').includes('&lt;match&gt;'), true);
+eq('injected tag becomes text, not markup',
   omniDescribe('<url>evil</url>', 'x.se').startsWith('&lt;url&gt;'), true);
-eq('host escapas ocksa',
+eq('host is escaped too',
   omniDescribe('t', 'a&b.se').includes('<url>a&amp;b.se</url>'), true);
-eq('trafftecken markeras',
+eq('matched characters are marked',
   omniDescribe('GitHub', 'github.com', [0,1,2]).startsWith('<match>Git</match>'), true);
 
 const otabs = [
   { id: 11, url: 'https://github.com/foo/bar', title: 'Pull request #412', lastAccessed: 300 },
   { id: 12, url: 'https://stackoverflow.com/q/1', title: 'OAuth redirect_uri mismatch', lastAccessed: 200 },
-  { id: 13, url: 'edge://newtab/', title: 'Ny flik', lastAccessed: 400 },
+  { id: 13, url: 'edge://newtab/', title: 'New tab', lastAccessed: 400 },
 ];
 const sugg = buildSuggestions(otabs, 'oauth');
-eq('omnibox matchar pa rubrik', sugg.map(s=>s.tabId), [12]);
-eq('omnibox hoppar over tomma nya flikar',
+eq('omnibox matches on title', sugg.map(s=>s.tabId), [12]);
+eq('omnibox skips empty new tabs',
   buildSuggestions(otabs, '').map(s=>s.tabId), [11, 12]);
-eq('omnibox matchar pa doman', buildSuggestions(otabs, 'github').map(s=>s.tabId), [11]);
-eq('content ar flikens url', sugg[0].content, 'https://stackoverflow.com/q/1');
-eq('inga traffar ger tom lista', buildSuggestions(otabs, 'zzzzz').length, 0);
+eq('omnibox matches on domain', buildSuggestions(otabs, 'github').map(s=>s.tabId), [11]);
+eq('content is the tab URL', sugg[0].content, 'https://stackoverflow.com/q/1');
+eq('no matches give an empty list', buildSuggestions(otabs, 'zzzzz').length, 0);
 
-console.log(fail ? `\n${fail} test misslyckades` : '\nAlla test gröna');
+// --- localization
+globalThis.chrome = { i18n: fakeI18n('sv') };
+eq('Swedish: rule category', categorize('https://github.com/foo/bar'), 'Kod');
+eq('Swedish: plural one', formatAge(DAY), '1 dag');
+eq('Swedish: plural other', formatAge(10 * DAY), '10 dagar');
+globalThis.chrome = { i18n: fakeI18n('en') };
+
+const en = catalog('en'), sv = catalog('sv');
+const placeholders = (m) => Object.keys(m.placeholders ?? {}).sort().join();
+eq('en and sv have the same keys', Object.keys(sv).sort(), Object.keys(en).sort());
+eq('en and sv use the same placeholders',
+  Object.keys(en).filter((k) => sv[k] && placeholders(en[k]) !== placeholders(sv[k])), []);
+
+// Every t('key') / tn('key') in the source must exist in the catalog.
+const srcFiles = (dir) => readdirSync(dir, { withFileTypes: true }).flatMap((d) =>
+  d.isDirectory() ? srcFiles(`${dir}/${d.name}`) : /\.(js|html)$/.test(d.name) ? [`${dir}/${d.name}`] : []);
+const root = new URL('..', import.meta.url).pathname;
+const used = new Set();
+for (const f of srcFiles(`${root}src`)) {
+  const code = readFileSync(f, 'utf8');
+  for (const m of code.matchAll(/\bt\('([a-z0-9_]+)'/g)) used.add(m[1]);
+  for (const m of code.matchAll(/\btn\('([a-z0-9_]+)'/g)) used.add(`${m[1]}_one`).add(`${m[1]}_other`);
+  if (f.endsWith('.html')) {
+    for (const m of code.matchAll(/data-i18n(?:-[a-z-]+)?="([a-z0-9_]+)"/g)) used.add(m[1]);
+  }
+  for (const m of code.matchAll(/(?:labelKey|label): '([a-z0-9_]+)'/g)) if (m[1].includes('_')) used.add(m[1]);
+}
+const manifest = readFileSync(`${root}manifest.json`, 'utf8');
+for (const m of manifest.matchAll(/__MSG_([a-z0-9_]+)__/g)) used.add(m[1]);
+eq('every key used in the code exists', [...used].filter((k) => !en[k]).sort(), []);
+
+console.log(fail ? `\n${fail} tests failed` : '\nAll tests green');
 process.exit(fail ? 1 : 0);

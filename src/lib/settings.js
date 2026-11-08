@@ -1,5 +1,5 @@
-// Inställningar. Allt ligger i chrome.storage.local — aldrig .sync, så att
-// API-nycklar inte lämnar maskinen via Microsoft-/Google-kontot.
+// Settings. Everything lives in chrome.storage.local — never .sync, so API keys
+// don't leave the machine via the Microsoft/Google account.
 
 export const DEFAULTS = {
   // 'none' | 'ollama' | 'openai' | 'anthropic' | 'edge'
@@ -10,7 +10,7 @@ export const DEFAULTS = {
     model: 'llama3.2',
   },
 
-  // Alla OpenAI-kompatibla endpoints: OpenAI, LM Studio, llama.cpp, OpenRouter…
+  // Any OpenAI-compatible endpoint: OpenAI, LM Studio, llama.cpp, OpenRouter…
   openai: {
     baseUrl: 'https://api.openai.com/v1',
     model: 'gpt-4o-mini',
@@ -31,7 +31,7 @@ export const DEFAULTS = {
   },
 
   stale: {
-    // Föreslå flikar som inte varit aktiva på så här många dagar.
+    // Suggest tabs that haven't been active for this many days.
     days: 7,
     includeGrouped: false,
     allWindows: false,
@@ -41,9 +41,9 @@ export const DEFAULTS = {
     allWindows: false,
     useRules: true,
     collapseNew: false,
-    // Låt flikar som redan ligger i en grupp vara i fred.
+    // Leave tabs that are already in a group alone.
     onlyUngrouped: true,
-    // Skicka aldrig fler än så här många flikar till en AI i ett svep.
+    // Never send more than this many tabs to an AI in one go.
     maxAiTabs: 80,
   },
 };

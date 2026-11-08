@@ -1,29 +1,30 @@
-// Anthropic Messages API, anropad direkt från tillägget.
+// Anthropic Messages API, called directly from the extension.
 //
-// Två saker som skiljer det här från ett vanligt serveranrop:
-//   1. Webbläsaranrop kräver headern anthropic-dangerous-direct-browser-access,
-//      annars blockerar CORS förfrågan.
-//   2. Nyckeln ligger i klienten. Det är rimligt för ett personligt tillägg,
-//      men använd en nyckel du kan återkalla separat — inte din huvudnyckel.
+// Two things that differ from a normal server-side call:
+//   1. Browser requests need the anthropic-dangerous-direct-browser-access
+//      header, otherwise CORS blocks the request.
+//   2. The key lives in the client. That's reasonable for a personal extension,
+//      but use a key you can revoke separately — not your main key.
 //
-// Vi använder structured outputs (output_config.format) i stället för att be om
-// JSON i prompten, så svaret alltid matchar schemat.
+// We use structured outputs (output_config.format) rather than asking for JSON
+// in the prompt, so the reply always matches the schema.
 
 import { parseJsonLoose } from './index.js';
+import { t } from '../i18n.js';
 
 export const id = 'anthropic';
-export const label = 'Anthropic (egen nyckel)';
+export const labelKey = 'provider_anthropic';
 
 const API_URL = 'https://api.anthropic.com/v1/messages';
 const API_VERSION = '2023-06-01';
 
 export const MODELS = [
-  { id: 'claude-opus-5', label: 'Claude Opus 5 — bäst kvalitet' },
-  { id: 'claude-sonnet-5', label: 'Claude Sonnet 5' },
-  { id: 'claude-haiku-4-5', label: 'Claude Haiku 4.5 — billigast' },
+  { id: 'claude-opus-5', labelKey: 'model_opus' },
+  { id: 'claude-sonnet-5', labelKey: 'model_sonnet' },
+  { id: 'claude-haiku-4-5', labelKey: 'model_haiku' },
 ];
 
-// effort stöds inte på Haiku 4.5 (returnerar fel om det skickas).
+// effort isn't supported on Haiku 4.5 (it returns an error if sent).
 const SUPPORTS_EFFORT = new Set(['claude-opus-5', 'claude-sonnet-5']);
 
 export function hostPermissions() {
@@ -38,8 +39,8 @@ export async function complete({ system, user, schema, settings }) {
   const model = settings.anthropic.model;
 
   const outputConfig = { format: { type: 'json_schema', schema } };
-  // Flikklassificering är en enkel uppgift — låg ansträngning räcker och
-  // håller nere både latens och kostnad.
+  // Tab classification is a simple task — low effort is enough and keeps both
+  // latency and cost down.
   if (SUPPORTS_EFFORT.has(model)) outputConfig.effort = 'low';
 
   const body = {
@@ -63,26 +64,26 @@ export async function complete({ system, user, schema, settings }) {
       body: JSON.stringify(body),
     });
   } catch (err) {
-    throw new Error(`Nådde inte Anthropic API: ${err.message}`);
+    throw new Error(t('err_unreachable', 'Anthropic API', err.message));
   }
 
   if (!res.ok) {
     const detail = await res.text();
-    if (res.status === 401) throw new Error('Anthropic avvisade nyckeln (401).');
-    if (res.status === 429) throw new Error('Anthropic: rate limit (429). Försök igen om en stund.');
-    throw new Error(`Anthropic svarade ${res.status}: ${detail.slice(0, 300)}`);
+    if (res.status === 401) throw new Error(t('err_anthropic_401'));
+    if (res.status === 429) throw new Error(t('err_anthropic_429'));
+    throw new Error(t('err_status', 'Anthropic', res.status, detail.slice(0, 300)));
   }
 
   const data = await res.json();
 
-  // Ett avslag kommer som HTTP 200 med tomt/partiellt innehåll — kolla
-  // stop_reason innan content läses.
+  // A refusal arrives as HTTP 200 with empty/partial content — check
+  // stop_reason before reading content.
   if (data.stop_reason === 'refusal') {
-    throw new Error('Anthropic avböjde förfrågan (stop_reason: refusal).');
+    throw new Error(t('err_anthropic_refusal'));
   }
 
   const textBlock = (data.content ?? []).find((b) => b.type === 'text');
-  if (!textBlock) throw new Error('Anthropic returnerade inget textsvar.');
+  if (!textBlock) throw new Error(t('err_anthropic_no_text'));
 
   return parseJsonLoose(textBlock.text);
 }

@@ -1,7 +1,8 @@
-// Fliklogik: hämtning, dubblettplanering, inaktiva flikar, gruppering, ångra.
-// Ingenting här anropar en AI — allt i den här filen är deterministiskt.
+// Tab logic: querying, duplicate planning, inactive tabs, grouping, undo.
+// Nothing here calls an AI — everything in this file is deterministic.
 
 import { normalizeUrl, isNewTabPage } from './urlkey.js';
+import { t, tn } from './i18n.js';
 
 export function tabUrl(tab) {
   return tab.url || tab.pendingUrl || '';
@@ -10,16 +11,16 @@ export function tabUrl(tab) {
 export async function queryTabs({ allWindows = false } = {}) {
   const query = allWindows ? {} : { currentWindow: true };
   const tabs = await chrome.tabs.query(query);
-  // Utan "tabs"-behörighet är url/title tomma. Då är tillägget meningslöst,
-  // så vi låter det märkas tydligt i stället för att tyst göra fel sak.
-  return tabs.filter((t) => typeof t.id === 'number');
+  // Without the "tabs" permission url/title are empty. The extension is then
+  // pointless, so we let that show rather than silently doing the wrong thing.
+  return tabs.filter((tab) => typeof tab.id === 'number');
 }
 
-// ---------------------------------------------------------------- dubbletter
+// ---------------------------------------------------------------- duplicates
 
 /**
- * Väljer vilken flik i en dubblettmängd som ska behållas.
- * Prioritet: fäst > aktiv > spelar ljud > redan grupperad > senast använd.
+ * Picks which tab in a set of duplicates to keep.
+ * Priority: pinned > active > playing audio > already grouped > most recently used.
  */
 function keeperScore(tab) {
   let s = 0;
@@ -32,7 +33,7 @@ function keeperScore(tab) {
 }
 
 /**
- * Räknar ut vad en dubblettstädning skulle göra — utan att göra det.
+ * Works out what a duplicate cleanup would do — without doing it.
  * @returns {{keep: chrome.tabs.Tab, close: chrome.tabs.Tab[], key: string}[]}
  */
 export function planDedupe(tabs, opts = {}) {
@@ -55,20 +56,20 @@ export function planDedupe(tabs, opts = {}) {
 
     const sorted = [...group].sort((a, b) => keeperScore(b) - keeperScore(a));
     const keep = sorted[0];
-    // Fästa flikar stängs aldrig, oavsett hur många dubbletter de har.
-    const close = sorted.slice(1).filter((t) => !t.pinned);
+    // Pinned tabs are never closed, however many duplicates they have.
+    const close = sorted.slice(1).filter((tab) => !tab.pinned);
     if (close.length === 0) continue;
 
     plan.push({ key, keep, close });
   }
 
-  // Störst städvinst först i UI:t.
+  // Biggest cleanup first in the UI.
   plan.sort((a, b) => b.close.length - a.close.length);
   return plan;
 }
 
 /**
- * Verkställer en plan och sparar det som stängdes så att det går att ångra.
+ * Applies a plan and saves what was closed so it can be undone.
  * @returns {Promise<{closed: number}>}
  */
 export async function applyDedupe(plan) {
@@ -76,21 +77,21 @@ export async function applyDedupe(plan) {
 }
 
 /**
- * Stänger flikar och sparar dem så att senaste städningen går att ångra —
- * oavsett om den kom från dubbletter eller inaktiva flikar.
+ * Closes tabs and saves them so the latest cleanup can be undone — whether it
+ * came from duplicates or inactive tabs.
  * @returns {Promise<{closed: number}>}
  */
 export async function closeWithUndo(toClose) {
   if (toClose.length === 0) return { closed: 0 };
 
-  const undo = toClose.map((t) => ({
-    url: tabUrl(t),
-    windowId: t.windowId,
-    index: t.index,
-    pinned: t.pinned,
+  const undo = toClose.map((tab) => ({
+    url: tabUrl(tab),
+    windowId: tab.windowId,
+    index: tab.index,
+    pinned: tab.pinned,
   }));
 
-  await chrome.tabs.remove(toClose.map((t) => t.id));
+  await chrome.tabs.remove(toClose.map((tab) => tab.id));
   await chrome.storage.local.set({
     lastClose: { at: Date.now(), tabs: undo },
   });
@@ -98,20 +99,20 @@ export async function closeWithUndo(toClose) {
   return { closed: toClose.length };
 }
 
-/** Öppnar de flikar som senaste städningen stängde. */
+/** Reopens the tabs the latest cleanup closed. */
 export async function undoClose() {
   const { lastClose } = await chrome.storage.local.get('lastClose');
   if (!lastClose || !lastClose.tabs?.length) return { reopened: 0 };
 
   const openWindows = new Set((await chrome.windows.getAll()).map((w) => w.id));
 
-  for (const t of lastClose.tabs) {
-    const create = { url: t.url, active: false, pinned: t.pinned };
-    if (openWindows.has(t.windowId)) create.windowId = t.windowId;
+  for (const tab of lastClose.tabs) {
+    const create = { url: tab.url, active: false, pinned: tab.pinned };
+    if (openWindows.has(tab.windowId)) create.windowId = tab.windowId;
     try {
       await chrome.tabs.create(create);
     } catch {
-      // Interna sidor (edge://…) går inte alltid att öppna programmatiskt.
+      // Internal pages (edge://…) can't always be opened programmatically.
     }
   }
 
@@ -119,17 +120,17 @@ export async function undoClose() {
   return { reopened: lastClose.tabs.length };
 }
 
-// ---------------------------------------------------------------- inaktiva
+// ------------------------------------------------------------ inactive tabs
 
 const DAY = 24 * 60 * 60 * 1000;
 
 /**
- * Flikar som inte varit aktiva på `days` dagar, äldst först. Räknar bara ut
- * — stänger ingenting.
+ * Tabs that haven't been active for `days` days, oldest first. Only works it
+ * out — closes nothing.
  *
- * Fästa, aktiva och ljudspelande flikar föreslås aldrig, och inte heller
- * flikar utan tidsstämpel: hellre missa en gammal flik än stänga en som
- * webbläsaren bara inte vet något om.
+ * Pinned, active and audible tabs are never suggested, and neither are tabs
+ * without a timestamp: better to miss an old tab than close one the browser
+ * simply knows nothing about.
  * @returns {chrome.tabs.Tab[]}
  */
 export function planStale(tabs, now, opts = {}) {
@@ -138,32 +139,32 @@ export function planStale(tabs, now, opts = {}) {
   const cutoff = now - days * DAY;
 
   return tabs
-    .filter((t) => {
-      if (t.pinned || t.active || t.audible) return false;
-      if (!opts.includeGrouped && t.groupId !== undefined && t.groupId !== -1) return false;
-      const at = t.lastAccessed;
+    .filter((tab) => {
+      if (tab.pinned || tab.active || tab.audible) return false;
+      if (!opts.includeGrouped && tab.groupId !== undefined && tab.groupId !== -1) return false;
+      const at = tab.lastAccessed;
       return typeof at === 'number' && at > 0 && at <= cutoff;
     })
     .sort((a, b) => a.lastAccessed - b.lastAccessed);
 }
 
-/** "3 tim", "5 dagar", "6 veckor", "4 mån" — grovt med flit. */
+/** "3 h", "5 days", "6 weeks", "4 mo" — coarse on purpose. */
 export function formatAge(ms) {
   const hours = Math.floor(ms / (60 * 60 * 1000));
-  if (hours < 24) return `${Math.max(hours, 0)} tim`;
+  if (hours < 24) return t('age_hours', Math.max(hours, 0));
   const days = Math.floor(ms / DAY);
-  if (days < 14) return days === 1 ? '1 dag' : `${days} dagar`;
-  if (days < 60) return `${Math.floor(days / 7)} veckor`;
-  return `${Math.floor(days / 30)} mån`;
+  if (days < 14) return tn('age_days', days);
+  if (days < 60) return t('age_weeks', Math.floor(days / 7));
+  return t('age_months', Math.floor(days / 30));
 }
 
-// ----------------------------------------------------------------- grupper
+// -------------------------------------------------------------------- groups
 
 const GROUP_COLORS = [
   'blue', 'red', 'yellow', 'green', 'pink', 'purple', 'cyan', 'orange', 'grey',
 ];
 
-/** Samma titel ger alltid samma färg, så grupper ser likadana ut över tid. */
+/** The same title always gets the same color, so groups look the same over time. */
 export function colorFor(title) {
   let h = 0;
   for (let i = 0; i < title.length; i++) h = (h * 31 + title.charCodeAt(i)) >>> 0;
@@ -180,9 +181,9 @@ export async function existingGroups({ allWindows = false } = {}) {
 }
 
 /**
- * Lägger flikar i namngivna grupper. Återanvänder en befintlig grupp med
- * samma titel i samma fönster, annars skapas en ny.
- * @param {Map<string, chrome.tabs.Tab[]>} assignments titel -> flikar
+ * Puts tabs into named groups. Reuses an existing group with the same title in
+ * the same window, otherwise creates a new one.
+ * @param {Map<string, chrome.tabs.Tab[]>} assignments title -> tabs
  */
 export async function applyGrouping(assignments, opts = {}) {
   const groups = await existingGroups({ allWindows: true });
@@ -197,15 +198,15 @@ export async function applyGrouping(assignments, opts = {}) {
   for (const [title, tabs] of assignments) {
     if (!title || tabs.length === 0) continue;
 
-    // Flikar från olika fönster kan inte hamna i samma grupp.
+    // Tabs from different windows can't end up in the same group.
     const byWindow = new Map();
-    for (const t of tabs) {
-      if (!byWindow.has(t.windowId)) byWindow.set(t.windowId, []);
-      byWindow.get(t.windowId).push(t);
+    for (const tab of tabs) {
+      if (!byWindow.has(tab.windowId)) byWindow.set(tab.windowId, []);
+      byWindow.get(tab.windowId).push(tab);
     }
 
     for (const [windowId, windowTabs] of byWindow) {
-      const tabIds = windowTabs.map((t) => t.id);
+      const tabIds = windowTabs.map((tab) => tab.id);
       const existingId = byWindowTitle.get(`${windowId}::${title}`);
 
       try {
@@ -223,7 +224,7 @@ export async function applyGrouping(assignments, opts = {}) {
         }
         grouped += tabIds.length;
       } catch (err) {
-        console.warn('[tabsift] kunde inte gruppera', title, err);
+        console.warn('[tabsift] could not group', title, err);
       }
     }
   }
@@ -231,7 +232,7 @@ export async function applyGrouping(assignments, opts = {}) {
   return { grouped, created };
 }
 
-/** Hoppar till en flik och fokuserar dess fönster. */
+/** Jumps to a tab and focuses its window. */
 export async function focusTab(tabId, windowId) {
   await chrome.tabs.update(tabId, { active: true });
   if (typeof windowId === 'number') {

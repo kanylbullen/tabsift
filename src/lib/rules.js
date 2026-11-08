@@ -1,13 +1,18 @@
-// Regelbaserad gruppering. Kör före AI:n och täcker det mesta i praktiken —
-// AI:n får bara de flikar som ingen regel känner igen.
+// Rule-based grouping. Runs before the AI and covers most tabs in practice —
+// the AI only gets the tabs no rule recognizes.
 //
-// Matchning sker på hostname (suffix) eller på hela URL:en (regex).
-// Första träffen vinner, så ordningen spelar roll: specifikt före generellt.
+// Matching is on hostname (suffix) or on the whole URL (regex). First match
+// wins, so order matters: specific before general.
+//
+// `category` is a key; the group name shown to the user is the translated
+// message `cat_<category>` from _locales.
+
+import { t } from './i18n.js';
 
 /** @type {{category: string, hosts?: string[], urlPattern?: RegExp}[]} */
 export const RULES = [
   {
-    category: 'Kod',
+    category: 'code',
     hosts: [
       'github.com', 'gitlab.com', 'bitbucket.org', 'codeberg.org',
       'stackoverflow.com', 'stackexchange.com', 'serverfault.com',
@@ -18,7 +23,7 @@ export const RULES = [
     ],
   },
   {
-    category: 'AI',
+    category: 'ai',
     hosts: [
       'claude.ai', 'anthropic.com', 'chatgpt.com', 'openai.com',
       'gemini.google.com', 'huggingface.co', 'perplexity.ai',
@@ -26,7 +31,7 @@ export const RULES = [
     ],
   },
   {
-    category: 'Molndrift',
+    category: 'cloud',
     hosts: [
       'portal.azure.com', 'console.aws.amazon.com', 'console.cloud.google.com',
       'vercel.com', 'netlify.com', 'cloudflare.com', 'hetzner.com',
@@ -35,7 +40,7 @@ export const RULES = [
     ],
   },
   {
-    category: 'Microsoft 365',
+    category: 'm365',
     hosts: [
       'office.com', 'office365.com', 'sharepoint.com', 'outlook.com',
       'outlook.office.com', 'teams.microsoft.com', 'onedrive.live.com',
@@ -44,7 +49,7 @@ export const RULES = [
     ],
   },
   {
-    category: 'Google',
+    category: 'google',
     hosts: [
       'mail.google.com', 'calendar.google.com', 'drive.google.com',
       'docs.google.com', 'sheets.google.com', 'meet.google.com',
@@ -52,21 +57,21 @@ export const RULES = [
     ],
   },
   {
-    category: 'Projekt',
+    category: 'projects',
     hosts: [
       'linear.app', 'notion.so', 'clickup.com', 'atlassian.net', 'jira.com',
       'trello.com', 'asana.com', 'monday.com', 'height.app', 'basecamp.com',
     ],
   },
   {
-    category: 'Kommunikation',
+    category: 'chat',
     hosts: [
       'slack.com', 'discord.com', 'web.whatsapp.com', 'web.telegram.org',
       'zoom.us', 'meet.jit.si', 'signal.org', 'messenger.com',
     ],
   },
   {
-    category: 'Video',
+    category: 'video',
     hosts: [
       'youtube.com', 'youtu.be', 'vimeo.com', 'twitch.tv', 'netflix.com',
       'svtplay.se', 'tv4play.se', 'viaplay.se', 'hbomax.com', 'max.com',
@@ -74,7 +79,7 @@ export const RULES = [
     ],
   },
   {
-    category: 'Socialt',
+    category: 'social',
     hosts: [
       'x.com', 'twitter.com', 'reddit.com', 'linkedin.com', 'facebook.com',
       'instagram.com', 'bsky.app', 'mastodon.social', 'farcaster.xyz',
@@ -82,7 +87,7 @@ export const RULES = [
     ],
   },
   {
-    category: 'Handel',
+    category: 'shopping',
     hosts: [
       'amazon.com', 'amazon.se', 'tradera.com', 'blocket.se', 'ebay.com',
       'aliexpress.com', 'temu.com', 'komplett.se', 'inet.se', 'netonnet.se',
@@ -90,7 +95,7 @@ export const RULES = [
     ],
   },
   {
-    category: 'Ekonomi',
+    category: 'finance',
     hosts: [
       'avanza.se', 'nordnet.se', 'swedbank.se', 'seb.se', 'handelsbanken.se',
       'nordea.se', 'skatteverket.se', 'fortnox.se', 'stripe.com',
@@ -99,7 +104,7 @@ export const RULES = [
     ],
   },
   {
-    category: 'Nyheter',
+    category: 'news',
     hosts: [
       'svt.se', 'dn.se', 'svd.se', 'aftonbladet.se', 'expressen.se',
       'sverigesradio.se', 'di.se', 'nyteknik.se', 'bbc.com', 'reuters.com',
@@ -107,15 +112,15 @@ export const RULES = [
     ],
   },
   {
-    category: 'Referens',
+    category: 'reference',
     hosts: [
       'wikipedia.org', 'wiktionary.org', 'archive.org', 'scholar.google.com',
       'arxiv.org', 'doi.org', 'lagen.nu', 'riksdagen.se', 'domstol.se',
     ],
   },
   {
-    // Lokal utveckling — matchar på URL, inte host.
-    category: 'Lokalt',
+    // Local development — matches on the URL, not the host.
+    category: 'local',
     urlPattern: /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\]|.*\.local|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+)(:\d+)?\//i,
   },
 ];
@@ -126,9 +131,9 @@ function hostMatches(hostname, suffix) {
 
 /**
  * @param {string} rawUrl
- * @returns {string | null} kategorinamn, eller null om ingen regel matchar
+ * @returns {string | null} category key, or null if no rule matches
  */
-export function categorize(rawUrl) {
+export function categoryKey(rawUrl) {
   if (!rawUrl) return null;
 
   let hostname;
@@ -147,7 +152,13 @@ export function categorize(rawUrl) {
   return null;
 }
 
-/** Alla kategorinamn reglerna kan producera — ges till AI:n som vokabulär. */
+/** Translated group name for a URL, or null if no rule matches. */
+export function categorize(rawUrl) {
+  const key = categoryKey(rawUrl);
+  return key ? t(`cat_${key}`) : null;
+}
+
+/** Every group name the rules can produce — given to the AI as vocabulary. */
 export function ruleCategories() {
-  return [...new Set(RULES.map((r) => r.category))];
+  return [...new Set(RULES.map((r) => t(`cat_${r.category}`)))];
 }

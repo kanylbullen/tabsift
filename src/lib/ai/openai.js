@@ -1,11 +1,12 @@
-// Alla OpenAI-kompatibla endpoints: OpenAI, LM Studio, llama.cpp --server,
-// OpenRouter, vLLM. Nyckeln ligger i chrome.storage.local och skickas bara
-// till den bas-URL du själv angett.
+// Any OpenAI-compatible endpoint: OpenAI, LM Studio, llama.cpp --server,
+// OpenRouter, vLLM. The key lives in chrome.storage.local and is only sent to
+// the base URL you entered yourself.
 
 import { originPattern, parseJsonLoose } from './index.js';
+import { t } from '../i18n.js';
 
 export const id = 'openai';
-export const label = 'OpenAI-kompatibel endpoint';
+export const labelKey = 'provider_openai';
 
 export function hostPermissions(settings) {
   const pattern = originPattern(settings.openai.baseUrl);
@@ -15,7 +16,7 @@ export function hostPermissions(settings) {
 export function isConfigured(settings) {
   const { baseUrl, model, apiKey } = settings.openai;
   if (!baseUrl || !model) return false;
-  // Lokala servrar (LM Studio m.fl.) kräver ingen nyckel.
+  // Local servers (LM Studio etc.) need no key.
   const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])/i.test(baseUrl);
   return isLocal || !!apiKey;
 }
@@ -55,22 +56,22 @@ export async function complete({ system, user, schema, settings }) {
   try {
     res = await post(settings, requestBody(settings, system, user, schema, true));
   } catch (err) {
-    throw new Error(`Nådde inte ${settings.openai.baseUrl}: ${err.message}`);
+    throw new Error(t('err_unreachable', settings.openai.baseUrl, err.message));
   }
 
-  // Servrar som inte kan json_schema svarar 400. Försök igen med json_object,
-  // som i praktiken alla kompatibla implementationer stödjer.
+  // Servers that can't do json_schema answer 400. Retry with json_object, which
+  // in practice every compatible implementation supports.
   if (res.status === 400) {
     const detail = await res.text();
     if (/response_format|json_schema/i.test(detail)) {
       res = await post(settings, requestBody(settings, system, user, schema, false));
     } else {
-      throw new Error(`Endpointen svarade 400: ${detail.slice(0, 200)}`);
+      throw new Error(t('err_status', 'Endpoint', 400, detail.slice(0, 200)));
     }
   }
 
   if (!res.ok) {
-    throw new Error(`Endpointen svarade ${res.status}: ${(await res.text()).slice(0, 200)}`);
+    throw new Error(t('err_status', 'Endpoint', res.status, (await res.text()).slice(0, 200)));
   }
 
   const data = await res.json();

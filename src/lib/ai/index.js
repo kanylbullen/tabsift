@@ -1,16 +1,17 @@
-// AI-lagret. Varje backend implementerar samma lilla gränssnitt:
+// The AI layer. Every backend implements the same small interface:
 //
-//   id, label
-//   hostPermissions(settings) -> string[]   patterns som måste beviljas
+//   id, labelKey                             labelKey is a _locales message
+//   hostPermissions(settings) -> string[]   patterns that must be granted
 //   isConfigured(settings)    -> boolean
 //   complete({system, user, schema, settings}) -> Promise<object>
 //
-// Ingenting utanför den här mappen vet vilken leverantör som används.
+// Nothing outside this folder knows which provider is in use.
 
 import * as ollama from './ollama.js';
 import * as openai from './openai.js';
 import * as anthropic from './anthropic.js';
 import * as edge from './edge.js';
+import { t } from '../i18n.js';
 
 export const PROVIDERS = { ollama, openai, anthropic, edge };
 
@@ -18,8 +19,8 @@ export function getProvider(id) {
   return PROVIDERS[id] ?? null;
 }
 
-// Svarsformatet. Modellen får det som JSON-schema där leverantören stödjer
-// det, så vi slipper parsa fritext.
+// The response format. The model gets it as a JSON schema where the provider
+// supports it, so we don't have to parse free text.
 export const ASSIGNMENT_SCHEMA = {
   type: 'object',
   properties: {
@@ -28,8 +29,8 @@ export const ASSIGNMENT_SCHEMA = {
       items: {
         type: 'object',
         properties: {
-          i: { type: 'integer', description: 'Flikens nummer från listan.' },
-          group: { type: 'string', description: 'Gruppnamnet fliken hör hemma i.' },
+          i: { type: 'integer', description: 'The tab\'s number from the list.' },
+          group: { type: 'string', description: 'The name of the group the tab belongs in.' },
         },
         required: ['i', 'group'],
         additionalProperties: false,
@@ -40,48 +41,51 @@ export const ASSIGNMENT_SCHEMA = {
   additionalProperties: false,
 };
 
-const SYSTEM_PROMPT = [
-  'Du sorterar webbläsarflikar i grupper efter vad användaren håller på med.',
-  'Ge varje flik exakt en grupp. Använd ett befintligt gruppnamn när det passar,',
-  'annars hitta på ett nytt: ett eller två ord, substantiv, på samma språk som',
-  'flikarnas titlar. Sikte på 3–8 grupper totalt — hellre några få meningsfulla',
-  'grupper än en grupp per flik. Gruppera efter uppgift och ämne, inte efter domän:',
-  'en GitHub-flik och en Stack Overflow-flik om samma bugg hör ihop.',
-  'Svara bara med JSON enligt schemat.',
-].join(' ');
+function systemPrompt(language) {
+  return [
+    'You sort browser tabs into groups by what the user is working on.',
+    'Give every tab exactly one group. Use an existing group name when it fits,',
+    'otherwise make up a new one: one or two words, nouns, written in the',
+    `language with code "${language}". Aim for 3–8 groups in total — a few`,
+    'meaningful groups rather than one group per tab. Group by task and topic,',
+    'not by domain: a GitHub tab and a Stack Overflow tab about the same bug',
+    'belong together. Reply only with JSON matching the schema.',
+  ].join(' ');
+}
 
 /**
  * @param {{title: string, host: string}[]} tabs
  * @param {string[]} existingGroups
  * @param {string[]} knownCategories
+ * @param {string} language UI language code for new group names
  */
-export function buildPrompt(tabs, existingGroups, knownCategories) {
-  const lines = tabs.map((t, i) => `${i}. ${t.title || '(utan titel)'} — ${t.host}`);
+export function buildPrompt(tabs, existingGroups, knownCategories, language = 'en') {
+  const lines = tabs.map((tab, i) => `${i}. ${tab.title || '(untitled)'} — ${tab.host}`);
 
   const parts = [];
   if (existingGroups.length) {
-    parts.push(`Befintliga grupper i fönstret: ${existingGroups.join(', ')}`);
+    parts.push(`Existing groups in the window: ${existingGroups.join(', ')}`);
   }
   if (knownCategories.length) {
-    parts.push(`Kategorinamn som redan används i tillägget: ${knownCategories.join(', ')}`);
+    parts.push(`Category names the extension already uses: ${knownCategories.join(', ')}`);
   }
-  parts.push('Flikar:', lines.join('\n'));
+  parts.push('Tabs:', lines.join('\n'));
 
-  return { system: SYSTEM_PROMPT, user: parts.join('\n\n') };
+  return { system: systemPrompt(language), user: parts.join('\n\n') };
 }
 
 /**
- * Kör en klassificering med vald leverantör.
- * @returns {Promise<Map<number, string>>} flikindex -> gruppnamn
+ * Runs a classification with the selected provider.
+ * @returns {Promise<Map<number, string>>} tab index -> group name
  */
-export async function classify(settings, tabs, existingGroups, knownCategories) {
+export async function classify(settings, tabs, existingGroups, knownCategories, language) {
   const provider = getProvider(settings.provider);
-  if (!provider) throw new Error('Ingen AI-backend vald.');
+  if (!provider) throw new Error(t('ai_none'));
   if (!provider.isConfigured(settings)) {
-    throw new Error(`${provider.label} är inte färdigkonfigurerad — se inställningarna.`);
+    throw new Error(t('ai_not_configured', t(provider.labelKey)));
   }
 
-  const { system, user } = buildPrompt(tabs, existingGroups, knownCategories);
+  const { system, user } = buildPrompt(tabs, existingGroups, knownCategories, language);
   const result = await provider.complete({
     system,
     user,
@@ -95,13 +99,13 @@ export async function classify(settings, tabs, existingGroups, knownCategories) 
     const group = String(a.group ?? '').trim();
     if (!Number.isInteger(i) || i < 0 || i >= tabs.length) continue;
     if (!group) continue;
-    // Håll gruppnamn korta — flikgrupper visar bara några tecken ändå.
+    // Keep group names short — tab groups only show a few characters anyway.
     out.set(i, group.slice(0, 28));
   }
   return out;
 }
 
-/** Ber om de host-behörigheter leverantören behöver. Kräver användargest. */
+/** Requests the host permissions the provider needs. Requires a user gesture. */
 export async function ensurePermissions(settings) {
   const provider = getProvider(settings.provider);
   if (!provider) return true;
@@ -111,7 +115,7 @@ export async function ensurePermissions(settings) {
   return chrome.permissions.request({ origins });
 }
 
-/** Hjälpare: gör en origin-pattern av en godtycklig bas-URL. */
+/** Helper: makes an origin pattern from an arbitrary base URL. */
 export function originPattern(baseUrl) {
   try {
     const u = new URL(baseUrl);
@@ -121,7 +125,7 @@ export function originPattern(baseUrl) {
   }
 }
 
-/** Hjälpare: plockar ut ett JSON-objekt ur ett svar som kan vara omgärdat av text. */
+/** Helper: pulls a JSON object out of a reply that may be wrapped in text. */
 export function parseJsonLoose(text) {
   if (typeof text !== 'string') return text;
   const trimmed = text.trim().replace(/^```(?:json)?\s*/i, '').replace(/```$/, '');
@@ -131,7 +135,7 @@ export function parseJsonLoose(text) {
     const start = trimmed.indexOf('{');
     const end = trimmed.lastIndexOf('}');
     if (start === -1 || end <= start) {
-      throw new Error('Modellen svarade inte med JSON.');
+      throw new Error(t('ai_not_json'));
     }
     return JSON.parse(trimmed.slice(start, end + 1));
   }

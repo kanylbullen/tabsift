@@ -1,14 +1,16 @@
-// Edges inbyggda on-device-modell via Prompt API (LanguageModel).
+// Edge's built-in on-device model via the Prompt API (LanguageModel).
 //
-// Status i augusti 2026: developer preview. Kräver Edge Canary eller Dev,
-// flaggan "Prompt API for on-device language model" i edge://flags, och
-// tillräcklig hårdvara (Phi-4-mini: ~5,5 GB VRAM + 20 GB disk; den mindre
-// Aion-1.0-Instruct går på CPU bakom en egen flagga).
+// Status in August 2026: developer preview. Requires Edge Canary or Dev, the
+// "Prompt API for on-device language model" flag in edge://flags, and enough
+// hardware (Phi-4-mini: ~5.5 GB VRAM + 20 GB disk; the smaller
+// Aion-1.0-Instruct runs on CPU behind its own flag).
 //
-// Ingen host-behörighet behövs — modellen körs i webbläsaren.
+// No host permission needed — the model runs in the browser.
+
+import { t } from '../i18n.js';
 
 export const id = 'edge';
-export const label = 'Edge inbyggd AI (Prompt API)';
+export const labelKey = 'provider_edge';
 
 export function hostPermissions() {
   return [];
@@ -30,15 +32,12 @@ export async function availability() {
 
 export async function complete({ system, user, schema }) {
   if (typeof LanguageModel === 'undefined') {
-    throw new Error(
-      'LanguageModel saknas. Kräver Edge Canary/Dev med flaggan ' +
-        '"Prompt API for on-device language model" påslagen.',
-    );
+    throw new Error(t('err_edge_missing'));
   }
 
   const state = await LanguageModel.availability();
   if (state === 'unavailable') {
-    throw new Error('Enheten uppfyller inte hårdvarukraven för den inbyggda modellen.');
+    throw new Error(t('err_edge_hardware'));
   }
 
   let session;
@@ -48,7 +47,7 @@ export async function complete({ system, user, schema }) {
       monitor(m) {
         m.addEventListener('downloadprogress', (e) => {
           const pct = e.total ? Math.round((e.loaded / e.total) * 100) : 0;
-          console.info(`[tabsift] laddar ner modell: ${pct}%`);
+          console.info(`[tabsift] downloading model: ${pct}%`);
         });
       },
     });
