@@ -122,13 +122,16 @@ alla flikar
 
 AI-grupper med bara en flik kastas — de är nästan alltid brus. Reglerna bor i
 `src/lib/rules.js` och är en vanlig array; lägg till dina egna domäner där.
+Gruppnamnen kommer från språkkatalogen och följer webbläsarens språk. Byter du
+språk får grupperna nya namn: en grupp som skapats på svenska ("Kod")
+återanvänds inte av engelsk gruppering ("Code"), utan en ny grupp hamnar bredvid.
 
 ## Så fungerar dubblettstädningen
 
 Två flikar är dubbletter om deras *normaliserade* URL är identisk: `www.` bort,
 `http`/`https` likställda, spårningsparametrar (`utm_*`, `fbclid`, `gclid`, …)
-borttagna, query sorterad, `#fragment` och avslutande snedstreck ignorerade. Allt
-utom det sista kan stängas av.
+borttagna, query sorterad, `#fragment` och avslutande snedstreck ignorerade. Spårningsparametrar,
+`#fragment` och avslutande snedstreck har var sin inställning, resten är alltid på.
 
 Vilken flik som behålls avgörs i tur och ordning av: fäst → aktiv → spelar ljud →
 redan grupperad → senast använd. **Fästa flikar stängs aldrig.** Senaste

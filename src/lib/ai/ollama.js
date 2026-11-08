@@ -57,7 +57,7 @@ export async function complete({ system, user, schema, settings }) {
 export async function listModels(settings) {
   const base = settings.ollama.baseUrl.replace(/\/+$/, '');
   const res = await fetch(`${base}/api/tags`);
-  if (!res.ok) throw new Error(t('err_status', 'Ollama', res.status, ''));
+  if (!res.ok) throw new Error(t('err_status_short', 'Ollama', res.status));
   const data = await res.json();
   return (data?.models ?? []).map((m) => m.name).sort();
 }

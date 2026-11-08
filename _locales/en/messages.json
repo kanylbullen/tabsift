@@ -401,6 +401,17 @@
       }
     }
   },
+  "err_status_short": {
+    "message": "$P1$ replied $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
   "err_anthropic_401": {
     "message": "Anthropic rejected the key (401)."
   },

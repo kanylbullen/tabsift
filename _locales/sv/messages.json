@@ -401,6 +401,17 @@
       }
     }
   },
+  "err_status_short": {
+    "message": "$P1$ svarade $P2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
   "err_anthropic_401": {
     "message": "Anthropic avvisade nyckeln (401)."
   },

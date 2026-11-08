@@ -27,6 +27,7 @@ const els = {
 let settings;
 let tabs = [];
 let dupKeys = new Set();
+let staleCount = 0;
 let mode = 'search';
 let dedupePlan = null;
 let groupPlan = null;
@@ -99,6 +100,8 @@ async function load() {
     else seen.set(key, tab.id);
   }
 
+  staleCount = planStale(tabs, Date.now(), settings.stale).length;
+
   const { lastClose } = await chrome.storage.local.get('lastClose');
   const fresh = lastClose && Date.now() - lastClose.at < 10 * 60 * 1000;
   els.undo.hidden = !fresh;
@@ -114,8 +117,7 @@ function renderCounts() {
   /** @type {[number|null, string][]} */
   const parts = [[tabs.length, tn('count_tabs', tabs.length)]];
   if (dupTabs.length) parts.push([dupTabs.length, tn('count_dupes', dupTabs.length)]);
-  const stale = planStale(tabs, Date.now(), settings.stale).length;
-  if (stale) parts.push([stale, t('count_stale', settings.stale.days)]);
+  if (staleCount) parts.push([staleCount, t('count_stale', settings.stale.days)]);
   if (settings.provider === 'none') parts.push([null, t('count_ai_off')]);
 
   parts.forEach(([n, label], i) => {
@@ -302,7 +304,7 @@ function renderPlanView() {
       const src = document.createElement('span');
       src.className = 'src';
       src.textContent =
-        `${t(g.source === 'ai' ? 'source_ai' : 'source_rule')} · ${g.tabs.length} · ${colorFor(g.title)}`;
+        `${g.source === 'ai' ? t('source_ai') : t('source_rule')} · ${g.tabs.length} · ${colorFor(g.title)}`;
       h.append(src);
 
       const ul = document.createElement('ul');
@@ -399,14 +401,14 @@ function labelWithKey(button, label, key) {
 }
 
 const MODES = [
-  ['dedupe', 'btn_dedupe', 'Ctrl+D'],
-  ['group', 'btn_group', 'Ctrl+G'],
-  ['stale', 'btn_stale', 'Ctrl+I'],
+  { mode: 'dedupe', label: 'btn_dedupe', key: 'Ctrl+D' },
+  { mode: 'group', label: 'btn_group', key: 'Ctrl+G' },
+  { mode: 'stale', label: 'btn_stale', key: 'Ctrl+I' },
 ];
 
 function renderFooter() {
   if (mode === 'search') {
-    for (const [m, label, key] of MODES) {
+    for (const { mode: m, label, key } of MODES) {
       labelWithKey(els[m], t(label), key);
       els[m].disabled = false;
       els[m].hidden = false;
@@ -433,7 +435,7 @@ function renderFooter() {
   }
 
   // One of the other buttons becomes Cancel; the rest are hidden.
-  const others = MODES.map(([m]) => m).filter((m) => m !== mode);
+  const others = MODES.map((x) => x.mode).filter((m) => m !== mode);
   others.forEach((m, i) => {
     const b = els[m];
     b.hidden = i > 0;
@@ -546,7 +548,7 @@ async function confirmGroup() {
 const ENTER = { dedupe: enterDedupe, group: enterGroup, stale: enterStale };
 const CONFIRM = { dedupe: confirmDedupe, group: confirmGroup, stale: confirmStale };
 
-for (const [m] of MODES) {
+for (const { mode: m } of MODES) {
   els[m].addEventListener('click', () => {
     if (mode === 'search') return void ENTER[m]();
     if (mode === m) return void CONFIRM[m]();

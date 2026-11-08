@@ -128,13 +128,17 @@ all tabs
 AI groups with only one tab are dropped — they're almost always noise. The rules
 live in `src/lib/rules.js` as a plain array; add your own domains there. Group
 names come from the translation catalog, so they follow the browser language.
+Switching the browser language therefore gives new names: groups made in
+Swedish ("Kod") aren't reused by English grouping ("Code"), so you get a new
+group next to the old one.
 
 ## How duplicate cleanup works
 
 Two tabs are duplicates if their *normalized* URLs are identical: `www.`
 removed, `http`/`https` treated as equal, tracking parameters (`utm_*`,
 `fbclid`, `gclid`, …) removed, query sorted, `#fragment` and trailing slash
-ignored. All but the first can be turned off.
+ignored. Tracking parameters, `#fragment` and trailing slash each have a
+setting; the rest is always on.
 
 Which tab is kept is decided in order by: pinned → active → playing audio →
 already grouped → most recently used. **Pinned tabs are never closed.** The

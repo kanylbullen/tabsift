@@ -1,7 +1,9 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { normalizeUrl, isNewTabPage } from '../src/lib/urlkey.js';
 import { matchBest } from '../src/lib/fuzzy.js';
-import { categorize } from '../src/lib/rules.js';
+import { categorize, RULES } from '../src/lib/rules.js';
+import { PROVIDERS } from '../src/lib/ai/index.js';
+import { MODELS } from '../src/lib/ai/anthropic.js';
 import { planDedupe, planStale, formatAge, colorFor } from '../src/lib/tabs.js';
 import { escapeXml, describe as omniDescribe, buildSuggestions } from '../src/lib/omnibox.js';
 
@@ -178,8 +180,12 @@ for (const f of srcFiles(`${root}src`)) {
   if (f.endsWith('.html')) {
     for (const m of code.matchAll(/data-i18n(?:-[a-z-]+)?="([a-z0-9_]+)"/g)) used.add(m[1]);
   }
-  for (const m of code.matchAll(/(?:labelKey|label): '([a-z0-9_]+)'/g)) if (m[1].includes('_')) used.add(m[1]);
+  for (const m of code.matchAll(/\blabel: '([a-z0-9_]+)'/g)) used.add(m[1]);
 }
+// Keys built at runtime, taken from the data that builds them.
+for (const r of RULES) used.add(`cat_${r.category}`);
+for (const p of Object.values(PROVIDERS)) used.add(p.labelKey);
+for (const m of MODELS) used.add(m.labelKey);
 const manifest = readFileSync(`${root}manifest.json`, 'utf8');
 for (const m of manifest.matchAll(/__MSG_([a-z0-9_]+)__/g)) used.add(m[1]);
 eq('every key used in the code exists', [...used].filter((k) => !en[k]).sort(), []);
