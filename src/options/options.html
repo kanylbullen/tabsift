@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="sv">
+  <head>
+    <meta charset="utf-8" />
+    <title>Tabsift — inställningar</title>
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <h1>Tabsift</h1>
+    <p class="lede">
+      Fuzzy flikpalett, dubblettstädning och semantisk gruppering. AI är valfri —
+      dubblettstädningen och paletten fungerar helt utan.
+    </p>
+
+    <section>
+      <h2>Behörigheter</h2>
+      <p>
+        Tillägget begär <code>tabs</code>, <code>tabGroups</code>,
+        <code>storage</code> och <code>commands</code>. Inga content scripts, ingen
+        <code>&lt;all_urls&gt;</code>, ingen historik, inga bokmärken, ingen telemetri.
+        Nätverksanrop görs bara till den AI-endpoint du själv väljer nedan, och
+        behörigheten för den frågas separat.
+      </p>
+    </section>
+
+    <section>
+      <h2>AI-backend</h2>
+      <label class="field">
+        <span>Leverantör</span>
+        <select id="provider">
+          <option value="none">Ingen — bara regler (rekommenderat att börja med)</option>
+          <option value="ollama">Ollama (lokal modell)</option>
+          <option value="edge">Edge inbyggd AI (Prompt API, Canary/Dev)</option>
+          <option value="openai">OpenAI-kompatibel endpoint</option>
+          <option value="anthropic">Anthropic (egen nyckel)</option>
+        </select>
+      </label>
+
+      <div class="panel" data-provider="ollama" hidden>
+        <label class="field">
+          <span>Bas-URL</span>
+          <input id="ollama-url" type="url" placeholder="http://localhost:11434" />
+        </label>
+        <label class="field">
+          <span>Modell</span>
+          <input id="ollama-model" type="text" placeholder="llama3.2" list="ollama-models" />
+          <datalist id="ollama-models"></datalist>
+        </label>
+        <p class="hint">
+          Ollama blockerar tillägg via CORS som standard. Starta servern med
+          <code id="ollama-origin-hint">OLLAMA_ORIGINS='chrome-extension://…'</code>
+          för att tillåta det här tillägget.
+        </p>
+      </div>
+
+      <div class="panel" data-provider="openai" hidden>
+        <label class="field">
+          <span>Bas-URL</span>
+          <input id="openai-url" type="url" placeholder="https://api.openai.com/v1" />
+        </label>
+        <label class="field">
+          <span>Modell</span>
+          <input id="openai-model" type="text" placeholder="gpt-4o-mini" />
+        </label>
+        <label class="field">
+          <span>API-nyckel</span>
+          <input id="openai-key" type="password" autocomplete="off" placeholder="sk-…" />
+        </label>
+        <p class="hint">
+          Fungerar mot OpenAI, LM Studio, llama.cpp och OpenRouter. Lokala servrar
+          behöver ingen nyckel. Egna domäner måste läggas till i
+          <code>optional_host_permissions</code> i <code>manifest.json</code>.
+        </p>
+      </div>
+
+      <div class="panel" data-provider="anthropic" hidden>
+        <label class="field">
+          <span>Modell</span>
+          <select id="anthropic-model"></select>
+        </label>
+        <label class="field">
+          <span>API-nyckel</span>
+          <input id="anthropic-key" type="password" autocomplete="off" placeholder="sk-ant-…" />
+        </label>
+        <p class="hint warn">
+          Nyckeln ligger i tilläggets lokala lagring, inte i en server. Använd en
+          separat, återkallningsbar nyckel — inte din huvudnyckel. Flikrubriker och
+          domäner skickas till Anthropic vid gruppering.
+        </p>
+      </div>
+
+      <div class="panel" data-provider="edge" hidden>
+        <p class="hint">
+          Kräver Edge Canary eller Dev med flaggan
+          <code>Prompt API for on-device language model</code> påslagen i
+          <code>edge://flags</code>, samt tillräcklig hårdvara. Inget lämnar maskinen.
+        </p>
+        <p id="edge-status" class="status"></p>
+      </div>
+
+      <div class="row" id="ai-actions" hidden>
+        <button id="btn-permission" type="button">Ge nätverksåtkomst</button>
+        <button id="btn-test" type="button">Testa anslutningen</button>
+        <span id="test-status" class="status"></span>
+      </div>
+    </section>
+
+    <section>
+      <h2>Dubbletter</h2>
+      <label class="check"><input type="checkbox" id="d-hash" /> Ignorera <code>#fragment</code></label>
+      <label class="check"><input type="checkbox" id="d-tracking" /> Strunta i spårningsparametrar (<code>utm_*</code>, <code>fbclid</code>, …)</label>
+      <label class="check"><input type="checkbox" id="d-slash" /> Ignorera avslutande snedstreck</label>
+      <label class="check"><input type="checkbox" id="d-newtab" /> Räkna tomma nya flikar som dubbletter</label>
+      <label class="check"><input type="checkbox" id="d-windows" /> Sök i alla fönster, inte bara det aktiva</label>
+      <p class="hint">Fästa flikar stängs aldrig. Senaste städningen går alltid att ångra från paletten.</p>
+    </section>
+
+    <section>
+      <h2>Inaktiva flikar</h2>
+      <label class="field">
+        <span>Föreslå flikar som inte använts på (dagar)</span>
+        <input id="s-days" type="number" min="1" max="365" step="1" />
+      </label>
+      <label class="check"><input type="checkbox" id="s-grouped" /> Ta med flikar som ligger i en grupp</label>
+      <label class="check"><input type="checkbox" id="s-windows" /> Sök i alla fönster, inte bara det aktiva</label>
+      <p class="hint">
+        Inget stängs utan förhandsvisning (<kbd>Ctrl+I</kbd> i paletten). Fästa, aktiva och
+        ljudspelande flikar föreslås aldrig.
+      </p>
+    </section>
+
+    <section>
+      <h2>Gruppering</h2>
+      <label class="check"><input type="checkbox" id="g-rules" /> Använd de inbyggda domänreglerna först</label>
+      <label class="check"><input type="checkbox" id="g-ungrouped" /> Rör bara flikar som inte redan ligger i en grupp</label>
+      <label class="check"><input type="checkbox" id="g-collapse" /> Fäll ihop nya grupper</label>
+      <label class="check"><input type="checkbox" id="g-windows" /> Gruppera över alla fönster</label>
+      <label class="field">
+        <span>Max antal flikar per AI-anrop</span>
+        <input id="g-max" type="number" min="10" max="300" step="10" />
+      </label>
+    </section>
+
+    <section>
+      <h2>Kortkommandon</h2>
+      <p>
+        <kbd>Ctrl+Shift+K</kbd> öppnar paletten, <kbd>Ctrl+Shift+U</kbd> städar dubbletter.
+        Grupperingskommandot saknar standardtangent.
+      </p>
+      <button id="btn-shortcuts" type="button">Ändra kortkommandon</button>
+    </section>
+
+    <footer id="saved" class="saved" hidden>Sparat</footer>
+
+    <script type="module" src="options.js"></script>
+  </body>
+</html>

@@ -1,0 +1,88 @@
+:root {
+  --bg: #ffffff; --fg: #1b1b1f; --muted: #6b6b76; --line: #e4e4ea;
+  --accent: #2563eb; --danger: #dc2626; --ok: #16a34a; --chip: #f6f6f9;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1c1c1f; --fg: #ececf1; --muted: #9a9aa5; --line: #33333a;
+    --accent: #7aa2ff; --danger: #f87171; --ok: #4ade80; --chip: #26262c;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  max-width: 660px;
+  margin: 0 auto;
+  padding: 28px 22px 60px;
+  background: var(--bg);
+  color: var(--fg);
+  font: 14px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+h1 { font-size: 21px; margin: 0 0 4px; }
+.lede { color: var(--muted); margin: 0 0 22px; }
+
+section {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px 16px 16px;
+  margin-bottom: 14px;
+}
+section h2 { font-size: 14px; margin: 0 0 10px; }
+
+p { margin: 0 0 8px; }
+
+code {
+  font-family: ui-monospace, "Cascadia Mono", Menlo, monospace;
+  font-size: 12px;
+  background: var(--chip);
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+
+kbd {
+  font: inherit; font-size: 11.5px;
+  border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px;
+}
+
+.field { display: block; margin-bottom: 10px; }
+.field > span { display: block; font-size: 12px; color: var(--muted); margin-bottom: 3px; }
+.field input, .field select {
+  width: 100%; padding: 7px 9px;
+  border: 1px solid var(--line); border-radius: 6px;
+  background: var(--bg); color: var(--fg); font: inherit;
+}
+.field input:focus, .field select:focus {
+  outline: 2px solid var(--accent); outline-offset: -1px; border-color: transparent;
+}
+
+.check { display: block; margin-bottom: 6px; cursor: pointer; }
+.check input { margin-right: 7px; }
+
+.panel {
+  margin-top: 12px; padding: 12px 14px;
+  border: 1px solid var(--line); border-radius: 8px; background: var(--chip);
+}
+
+.hint { font-size: 12px; color: var(--muted); margin: 6px 0 0; }
+.hint.warn { color: var(--danger); }
+
+.row { display: flex; align-items: center; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+
+button {
+  font: inherit; font-size: 13px; padding: 6px 11px;
+  border: 1px solid var(--line); border-radius: 6px;
+  background: var(--bg); color: var(--fg); cursor: pointer;
+}
+button:hover { border-color: var(--accent); color: var(--accent); }
+
+.status { font-size: 12.5px; color: var(--muted); }
+.status.ok { color: var(--ok); }
+.status.error { color: var(--danger); }
+
+.saved {
+  position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%);
+  background: var(--accent); color: #fff;
+  padding: 6px 14px; border-radius: 20px; font-size: 12.5px;
+}

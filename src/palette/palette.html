@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="sv">
+  <head>
+    <meta charset="utf-8" />
+    <title>Tabsift</title>
+    <link rel="stylesheet" href="palette.css" />
+  </head>
+  <body>
+    <header>
+      <input
+        id="query"
+        type="text"
+        autocomplete="off"
+        spellcheck="false"
+        placeholder="Sök bland öppna flikar…"
+        aria-label="Sök bland öppna flikar"
+      />
+      <div id="counts" class="counts"></div>
+    </header>
+
+    <main>
+      <ul id="results" class="results" role="listbox" aria-label="Flikar"></ul>
+      <div id="empty" class="empty" hidden></div>
+    </main>
+
+    <div id="notice" class="notice" hidden></div>
+
+    <footer>
+      <button id="btn-dedupe" type="button" class="action">
+        Dubbletter <kbd>Ctrl+D</kbd>
+      </button>
+      <button id="btn-group" type="button" class="action">
+        Gruppera <kbd>Ctrl+G</kbd>
+      </button>
+      <button id="btn-stale" type="button" class="action">
+        Inaktiva <kbd>Ctrl+I</kbd>
+      </button>
+      <button id="btn-undo" type="button" class="action ghost" hidden>Ångra</button>
+      <span class="spacer"></span>
+      <button id="btn-options" type="button" class="action ghost" title="Inställningar">⚙</button>
+    </footer>
+
+    <script type="module" src="palette.js"></script>
+  </body>
+</html>

@@ -1,0 +1,44 @@
+{
+  "manifest_version": 3,
+  "name": "Tabsift",
+  "version": "0.2.0",
+  "description": "Fuzzy flikpalett, dubblettstädning, förslag på inaktiva flikar och semantisk flikgruppering. Lokal AI eller egen nyckel. Ingen telemetri.",
+  "minimum_chrome_version": "121",
+
+  "permissions": ["tabs", "tabGroups", "storage"],
+
+  "optional_host_permissions": [
+    "http://localhost/*",
+    "http://127.0.0.1/*",
+    "https://api.anthropic.com/*",
+    "https://api.openai.com/*"
+  ],
+
+  "background": {
+    "service_worker": "src/background.js",
+    "type": "module"
+  },
+
+  "action": {
+    "default_popup": "src/palette/palette.html",
+    "default_title": "Tabsift (Ctrl+Shift+K)"
+  },
+
+  "omnibox": { "keyword": "t" },
+
+  "options_page": "src/options/options.html",
+
+  "commands": {
+    "_execute_action": {
+      "suggested_key": { "default": "Ctrl+Shift+K", "mac": "Command+Shift+K" },
+      "description": "Öppna flikpaletten"
+    },
+    "dedupe-tabs": {
+      "suggested_key": { "default": "Ctrl+Shift+U", "mac": "Command+Shift+U" },
+      "description": "Stäng dubblettflikar"
+    },
+    "group-tabs": {
+      "description": "Gruppera flikar"
+    }
+  }
+}

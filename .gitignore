@@ -1,0 +1,6 @@
+# Paket för Edge-/Chrome-butiken byggs ur källkoden och checkas inte in.
+*.zip
+*.crx
+*.pem
+node_modules/
+.DS_Store
