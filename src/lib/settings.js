@@ -1,6 +1,8 @@
 // Settings. Everything lives in chrome.storage.local — never .sync, so API keys
 // don't leave the machine via the Microsoft/Google account.
 
+import { LEGACY_MODELS } from './ai/anthropic.js';
+
 export const DEFAULTS = {
   // 'none' | 'ollama' | 'openai' | 'anthropic' | 'edge'
   provider: 'none',
@@ -18,7 +20,7 @@ export const DEFAULTS = {
   },
 
   anthropic: {
-    model: 'claude-opus-5',
+    model: 'claude-opus-5-5',
     apiKey: '',
   },
 
@@ -60,7 +62,10 @@ function merge(base, patch) {
 
 export async function getSettings() {
   const { settings } = await chrome.storage.local.get('settings');
-  return merge(DEFAULTS, settings);
+  const out = merge(DEFAULTS, settings);
+  // A model id saved by an earlier version would leave the model picker blank.
+  out.anthropic.model = LEGACY_MODELS[out.anthropic.model] ?? out.anthropic.model;
+  return out;
 }
 
 export async function saveSettings(patch) {

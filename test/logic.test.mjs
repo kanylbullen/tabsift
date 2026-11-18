@@ -3,7 +3,8 @@ import { normalizeUrl, isNewTabPage } from '../src/lib/urlkey.js';
 import { matchBest } from '../src/lib/fuzzy.js';
 import { categorize, RULES } from '../src/lib/rules.js';
 import { PROVIDERS } from '../src/lib/ai/index.js';
-import { MODELS } from '../src/lib/ai/anthropic.js';
+import { MODELS, LEGACY_MODELS } from '../src/lib/ai/anthropic.js';
+import { DEFAULTS } from '../src/lib/settings.js';
 import { planDedupe, planStale, formatAge, colorFor } from '../src/lib/tabs.js';
 import { escapeXml, describe as omniDescribe, buildSuggestions } from '../src/lib/omnibox.js';
 
@@ -154,6 +155,12 @@ eq('omnibox skips empty new tabs',
 eq('omnibox matches on domain', buildSuggestions(otabs, 'github').map(s=>s.tabId), [11]);
 eq('content is the tab URL', sugg[0].content, 'https://stackoverflow.com/q/1');
 eq('no matches give an empty list', buildSuggestions(otabs, 'zzzzz').length, 0);
+
+// --- Anthropic models
+const modelIds = MODELS.map((m) => m.id);
+eq('default Anthropic model is in the picker', modelIds.includes(DEFAULTS.anthropic.model), true);
+eq('every legacy model id maps to one in the picker',
+  Object.values(LEGACY_MODELS).filter((id) => !modelIds.includes(id)), []);
 
 // --- localization
 globalThis.chrome = { i18n: fakeI18n('sv') };

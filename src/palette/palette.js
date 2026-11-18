@@ -104,6 +104,8 @@ async function load() {
 
   const { lastClose } = await chrome.storage.local.get('lastClose');
   const fresh = lastClose && Date.now() - lastClose.at < 10 * 60 * 1000;
+  // Past the undo window the list is only a record of closed URLs — drop it.
+  if (lastClose && !fresh) await chrome.storage.local.remove('lastClose');
   els.undo.hidden = !fresh;
   if (fresh) els.undo.textContent = t('btn_undo_count', lastClose.tabs.length);
 }

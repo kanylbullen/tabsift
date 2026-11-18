@@ -442,13 +442,13 @@
     "message": "This device does not meet the hardware requirements for the built-in model."
   },
   "model_opus": {
-    "message": "Claude Opus 5 — best quality"
+    "message": "Claude Opus 5.5 — best quality"
   },
   "model_sonnet": {
-    "message": "Claude Sonnet 5"
+    "message": "Claude Sonnet 5.5"
   },
   "model_haiku": {
-    "message": "Claude Haiku 4.5 — cheapest"
+    "message": "Claude Haiku 5.5 — cheapest"
   },
   "opt_title": {
     "message": "Tabsift — settings"

@@ -1,0 +1,87 @@
+<!doctype html>
+<!--
+  Store screenshot frame: 1280 x 800, a caption on the left and the real palette
+  (src/palette/palette.html) on the right, running against stub.js.
+
+  Query: ?lang=en|sv&mode=search|dedupe|stale
+  Served from the repository root (scripts/screenshots/shoot.py does that).
+-->
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      html, body { margin: 0; width: 1280px; height: 800px; overflow: hidden; }
+      body {
+        display: flex; align-items: center; justify-content: space-between; padding: 0 96px;
+        box-sizing: border-box;
+        background: linear-gradient(135deg, #eef2ff 0%, #dbeafe 55%, #bfdbfe 100%);
+        font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+        color: #0f172a;
+      }
+      .caption { max-width: 440px; }
+      .caption img { width: 72px; height: 72px; }
+      .caption h1 { font-size: 46px; line-height: 1.12; margin: 22px 0 16px; letter-spacing: -0.02em; }
+      .caption p { font-size: 22px; line-height: 1.45; margin: 0; color: #334155; }
+      .popup {
+        width: 460px; height: 580px; flex: none; border: 0; border-radius: 12px; background: #fff;
+        box-shadow: 0 24px 60px rgba(15, 23, 42, 0.25), 0 2px 8px rgba(15, 23, 42, 0.12);
+        transform: scale(1.18); transform-origin: center right;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="caption">
+      <img src="/icons/128.png" alt="" />
+      <h1 id="title"></h1>
+      <p id="text"></p>
+    </div>
+    <iframe class="popup" id="popup"></iframe>
+
+    <script>
+      const q = new URLSearchParams(location.search);
+      window.DEMO = { lang: q.get('lang') || 'en', mode: q.get('mode') || 'search' };
+
+      const CAPTIONS = {
+        en: {
+          search: ['Find any tab in a keystroke', 'Fuzzy search across every open tab — or type t and a space in the address bar.'],
+          dedupe: ['Close duplicates, keep the right one', 'Tracking parameters and fragments are ignored. Pinned tabs are never closed, and everything can be undone.'],
+          stale: ['Clear out tabs you no longer use', 'See tabs that have been inactive for days, oldest first. Uncheck what you want to keep.'],
+        },
+        sv: {
+          search: ['Hitta vilken flik som helst', 'Fuzzy sökning bland alla öppna flikar — eller skriv t och mellanslag i adressfältet.'],
+          dedupe: ['Stäng dubbletter, behåll rätt flik', 'Spårningsparametrar och fragment ignoreras. Fästa flikar stängs aldrig, och allt går att ångra.'],
+          stale: ['Rensa flikar du inte använder', 'Se flikar som varit inaktiva i flera dagar, äldst först. Bocka ur det du vill behålla.'],
+        },
+      };
+      const [title, text] = CAPTIONS[DEMO.lang][DEMO.mode];
+      document.getElementById('title').textContent = title;
+      document.getElementById('text').textContent = text;
+
+      // The real palette markup, with the stub loaded before its module script.
+      const src = new XMLHttpRequest();
+      src.open('GET', '/src/palette/palette.html', false);
+      src.send();
+      const html = src.responseText
+        .replace('<head>', '<head><base href="/src/palette/">')
+        .replace('<script type="module"', '<script src="/scripts/screenshots/stub.js"><\/script><script type="module"');
+      const frame = document.getElementById('popup');
+      frame.srcdoc = html;
+
+      frame.addEventListener('load', () => {
+        const doc = frame.contentDocument;
+        const key = (k) => doc.dispatchEvent(new KeyboardEvent('keydown', { key: k, ctrlKey: true, bubbles: true }));
+        setTimeout(() => {
+          if (DEMO.mode === 'search') {
+            // Leave the query empty: the full list shows more than one match.
+          } else if (DEMO.mode === 'dedupe') {
+            key('d');
+          } else if (DEMO.mode === 'stale') {
+            key('i');
+          }
+          // A real popup is as tall as its content.
+          setTimeout(() => { frame.style.height = `${Math.ceil(doc.body.getBoundingClientRect().height)}px`; }, 300);
+        }, 300);
+      });
+    </script>
+  </body>
+</html>
