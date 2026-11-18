@@ -24,13 +24,6 @@ export const MODELS = [
   { id: 'claude-haiku-5-5', labelKey: 'model_haiku' },
 ];
 
-/** Ids saved by earlier versions, mapped to the model that replaced them. */
-export const LEGACY_MODELS = {
-  'claude-opus-5': 'claude-opus-5-5',
-  'claude-sonnet-5': 'claude-sonnet-5-5',
-  'claude-haiku-4-5': 'claude-haiku-5-5',
-};
-
 // On a safety-classifier refusal the API can re-run the request on a fallback
 // model in the same call. Haiku has no server-side fallback.
 const SUPPORTS_FALLBACK = new Set(['claude-opus-5-5', 'claude-sonnet-5-5']);

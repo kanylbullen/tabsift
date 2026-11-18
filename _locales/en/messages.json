@@ -535,7 +535,7 @@
     "message": "Inactive tabs"
   },
   "opt_s_days": {
-    "message": "Suggest tabs not used for (days)"
+    "message": "Suggest tabs not used for (days; 0.01 ≈ 15 minutes)"
   },
   "opt_s_grouped": {
     "message": "Include tabs that are in a group"

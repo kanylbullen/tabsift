@@ -81,7 +81,8 @@ up in a listing. Promo tiles are optional and skipped.
 > provider — a local model via Ollama, Edge's built-in AI, any OpenAI-compatible
 > endpoint or Anthropic with your own key.
 >
-> Every cleanup shows a preview first and can be undone for ten minutes.
+> Cleanups from the palette show a preview first, and every cleanup can be
+> undone for ten minutes.
 >
 > Private by design: Tabsift reads tab titles and addresses only, never page
 > content. It has no server, no analytics and no telemetry. Nothing leaves your
@@ -110,7 +111,8 @@ Add language*, Edge *Store listings → Add a language*):
 > koppla in en AI-leverantör — en lokal modell via Ollama, Edges inbyggda AI,
 > en OpenAI-kompatibel endpoint eller Anthropic med din egen nyckel.
 >
-> Varje städning visar en förhandsvisning först och kan ångras i tio minuter.
+> Städningar från paletten visar en förhandsvisning först, och varje städning
+> kan ångras i tio minuter.
 >
 > Integritet från början: Tabsift läser bara flikars rubriker och adresser,
 > aldrig sidinnehåll. Det har ingen server, ingen analys och ingen telemetri.
@@ -158,16 +160,19 @@ privacy policy and the code; reviewers compare them.
 **Remote code:** No. All code is in the package; AI providers return group
 names as JSON data, which is never executed.
 
-**Data usage.** Chrome: tick **Web history** and nothing else — tab titles and
-domains can be sent to an AI provider the user chooses. Edge: the matching
-box. Description where asked:
+**Data usage.** Chrome: tick **Web history** (tab titles and domains can be
+sent to an AI provider the user chooses) and **Authentication information**
+(the user's own API key is sent to that provider). Nothing else. Edge: the
+matching boxes. Description where asked:
 
 > The extension reads the titles and addresses of open tabs to provide its
 > features, locally. Nothing is sent anywhere by default. If the user turns on
 > an AI provider for grouping, the titles (max 120 characters) and domains of
 > tabs no built-in rule recognizes are sent to that provider — the user's own
 > local server, or OpenAI-compatible/Anthropic endpoints with the user's own
-> key. Not sold, not shared with third parties, not used for advertising.
+> key. The API key the user enters is stored locally and sent only to that
+> provider, to authenticate the request. Not sold, not shared with third
+> parties, not used for advertising.
 
 Certifications (all three): not sold to third parties; not used or transferred
 for purposes unrelated to the single purpose; not used to determine
@@ -176,14 +181,14 @@ creditworthiness or for lending.
 **Test instructions** (Chrome allows at most 500 characters; Edge 2 000 — use
 the same text):
 
-> No account or setup needed. Open a few tabs, including two copies of one
-> page. Click the toolbar icon (or Ctrl+Shift+K): type to search tabs, Enter
-> jumps. Ctrl+D previews duplicates, Ctrl+I lists tabs inactive for 7+ days
-> (adjustable in Options), Ctrl+G groups tabs by built-in rules. Every close
-> can be undone. AI grouping is optional and needs the reviewer's own provider;
-> everything else works without it.
+> No account needed. Open a few tabs, two of them the same page. Click the
+> toolbar icon (Ctrl+Shift+K): type to search, Enter jumps. Ctrl+D previews
+> duplicates; Ctrl+G groups by built-in rules. Inactive tabs (Ctrl+I) default
+> to 7+ days: in Options set it to 0.01 days, wait 15 minutes, press Ctrl+I.
+> Closes can be undone. AI grouping is optional and needs your own provider;
+> the rest works without it.
 
-That text is 469 characters. Edge asks whether the reviewer needs credentials
+That text is 399 characters; check again after any edit. Edge asks whether the reviewer needs credentials
 or accounts: **No**.
 
 ## Accounts (owner)

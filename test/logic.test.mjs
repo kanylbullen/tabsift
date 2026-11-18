@@ -3,8 +3,8 @@ import { normalizeUrl, isNewTabPage } from '../src/lib/urlkey.js';
 import { matchBest } from '../src/lib/fuzzy.js';
 import { categorize, RULES } from '../src/lib/rules.js';
 import { PROVIDERS } from '../src/lib/ai/index.js';
-import { MODELS, LEGACY_MODELS } from '../src/lib/ai/anthropic.js';
-import { DEFAULTS } from '../src/lib/settings.js';
+import { MODELS } from '../src/lib/ai/anthropic.js';
+import { DEFAULTS, LEGACY_MODELS } from '../src/lib/settings.js';
 import { planDedupe, planStale, formatAge, colorFor } from '../src/lib/tabs.js';
 import { escapeXml, describe as omniDescribe, buildSuggestions } from '../src/lib/omnibox.js';
 

@@ -535,7 +535,7 @@
     "message": "Inaktiva flikar"
   },
   "opt_s_days": {
-    "message": "Föreslå flikar som inte använts på (dagar)"
+    "message": "Föreslå flikar som inte använts på (dagar; 0,01 ≈ 15 minuter)"
   },
   "opt_s_grouped": {
     "message": "Ta med flikar som ligger i en grupp"

@@ -24,6 +24,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 SHIP = ["manifest.json", "_locales", "src", "icons"]
+JUNK = {"Thumbs.db", "desktop.ini"}
 
 # The Chrome Web Store shows the manifest description as the summary and caps it.
 SUMMARY_MAX = 132
@@ -75,6 +76,8 @@ def files_to_ship() -> list[Path]:
         paths = [path] if path.is_file() else sorted(p for p in path.rglob("*") if p.is_file())
         for p in paths:
             rel = p.relative_to(ROOT)
+            if p.name.startswith(".") or p.name in JUNK or p.name.endswith(("~", ".swp")):
+                continue
             if p.suffix == ".pem":
                 fail(f"refusing to pack a private key: {rel}")
             out.append(rel)
