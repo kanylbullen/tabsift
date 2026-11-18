@@ -19,13 +19,14 @@ const API_URL = 'https://api.anthropic.com/v1/messages';
 const API_VERSION = '2023-06-01';
 
 export const MODELS = [
-  { id: 'claude-opus-5', labelKey: 'model_opus' },
-  { id: 'claude-sonnet-5', labelKey: 'model_sonnet' },
-  { id: 'claude-haiku-4-5', labelKey: 'model_haiku' },
+  { id: 'claude-opus-5-5', labelKey: 'model_opus' },
+  { id: 'claude-sonnet-5-5', labelKey: 'model_sonnet' },
+  { id: 'claude-haiku-5-5', labelKey: 'model_haiku' },
 ];
 
-// effort isn't supported on Haiku 4.5 (it returns an error if sent).
-const SUPPORTS_EFFORT = new Set(['claude-opus-5', 'claude-sonnet-5']);
+// On a safety-classifier refusal the API can re-run the request on a fallback
+// model in the same call. Haiku has no server-side fallback.
+const SUPPORTS_FALLBACK = new Set(['claude-opus-5-5', 'claude-sonnet-5-5']);
 
 export function hostPermissions() {
   return ['https://api.anthropic.com/*'];
@@ -38,29 +39,32 @@ export function isConfigured(settings) {
 export async function complete({ system, user, schema, settings }) {
   const model = settings.anthropic.model;
 
-  const outputConfig = { format: { type: 'json_schema', schema } };
   // Tab classification is a simple task — low effort is enough and keeps both
-  // latency and cost down.
-  if (SUPPORTS_EFFORT.has(model)) outputConfig.effort = 'low';
-
+  // latency and cost down. All three current models take effort.
   const body = {
     model,
     max_tokens: 16000,
     system,
     messages: [{ role: 'user', content: user }],
-    output_config: outputConfig,
+    output_config: { format: { type: 'json_schema', schema }, effort: 'low' },
   };
+
+  const headers = {
+    'content-type': 'application/json',
+    'x-api-key': settings.anthropic.apiKey,
+    'anthropic-version': API_VERSION,
+    'anthropic-dangerous-direct-browser-access': 'true',
+  };
+  if (SUPPORTS_FALLBACK.has(model)) {
+    body.fallbacks = 'default';
+    headers['anthropic-beta'] = 'server-side-fallback-2026-07-01';
+  }
 
   let res;
   try {
     res = await fetch(API_URL, {
       method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-api-key': settings.anthropic.apiKey,
-        'anthropic-version': API_VERSION,
-        'anthropic-dangerous-direct-browser-access': 'true',
-      },
+      headers,
       body: JSON.stringify(body),
     });
   } catch (err) {

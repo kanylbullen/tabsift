@@ -68,6 +68,7 @@ historik, inga bokmärken och ingen telemetri. Host-behörigheterna är *optiona
 de frågas först när du väljer en AI-backend, och bara för den endpoint du valt.
 
 Sidinnehåll läses aldrig. Tillägget ser flikars titel och URL, inget mer.
+Hela redogörelsen för vad som läses, sparas och skickas står i [PRIVACY.sv.md](PRIVACY.sv.md).
 
 ---
 
@@ -186,6 +187,13 @@ src/
       ollama.js  openai.js  anthropic.js  edge.js
   palette/               popup: sök, förhandsvisa, verkställ
   options/               inställningar
+icons/                   ikoner för verktygsfältet och manifestet (scripts/make-icons.py)
+scripts/
+  pack.py                zippen till butikerna
+  make-icons.py          ritar icons/ och bilderna i store/
+  screenshots/           butiksbilder från den riktiga paletten med påhittade flikar
+store/                   butiksikon, Edge-logga, skärmbilder
+docs/store-listing.md    butikstexter och formulärsvar (på engelska)
 test/logic.test.mjs      test för URL-normalisering, regler, fuzzy, dedupe, inaktiva, omnibox, språk
 ```
 
@@ -200,6 +208,18 @@ att `github.com.evil.se` inte matchar `github.com`-regeln.
 
 Rubriker från webbsidor är opålitlig indata och sätts alltid som textnoder,
 aldrig via `innerHTML`.
+
+---
+
+## Publicera
+
+`python3 scripts/pack.py` bygger `dist/tabsift-<version>.zip` till Chrome Web
+Store och Edge Add-ons. Texter, bilder och alla formulärsvar står i
+[docs/store-listing.md](docs/store-listing.md).
+
+## Licens
+
+[MIT](LICENSE).
 
 ---
 

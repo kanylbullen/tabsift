@@ -70,6 +70,7 @@ no bookmarks and no telemetry. The host permissions are *optional* — they are
 only requested when you pick an AI backend, and only for the endpoint you chose.
 
 Page content is never read. The extension sees tab titles and URLs, nothing more.
+The full account of what is read, stored and sent is in [PRIVACY.md](PRIVACY.md).
 
 ---
 
@@ -191,6 +192,13 @@ src/
       ollama.js  openai.js  anthropic.js  edge.js
   palette/               popup: search, preview, apply
   options/               settings
+icons/                   toolbar and manifest icons (scripts/make-icons.py)
+scripts/
+  pack.py                the zip for the stores
+  make-icons.py          draws icons/ and store/ images
+  screenshots/           store screenshots from the real palette with made-up tabs
+store/                   store icon, Edge logo, screenshots
+docs/store-listing.md    store texts and form answers
 test/logic.test.mjs      tests for URL normalization, rules, fuzzy, dedupe, inactive tabs, omnibox, languages
 ```
 
@@ -205,6 +213,18 @@ and that `github.com.evil.se` doesn't match the `github.com` rule.
 
 Titles from web pages are untrusted input and are always set as text nodes,
 never via `innerHTML`.
+
+---
+
+## Publishing
+
+`python3 scripts/pack.py` builds `dist/tabsift-<version>.zip` for Chrome Web
+Store and Edge Add-ons. Texts, images and every form answer are in
+[docs/store-listing.md](docs/store-listing.md).
+
+## License
+
+[MIT](LICENSE).
 
 ---
 

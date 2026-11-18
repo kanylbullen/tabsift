@@ -78,7 +78,8 @@ function readForm() {
       allWindows: $('d-windows').checked,
     },
     stale: {
-      days: Math.max(1, Math.min(365, Math.round(Number($('s-days').value)) || 7)),
+      // Fractions are allowed (0.01 days is about 15 minutes), mostly for trying it out.
+      days: Math.max(0.01, Math.min(365, Math.round(Number($('s-days').value) * 100) / 100 || 7)),
       includeGrouped: $('s-grouped').checked,
       allWindows: $('s-windows').checked,
     },
