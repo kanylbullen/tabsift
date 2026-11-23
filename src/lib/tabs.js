@@ -1,7 +1,7 @@
 // Tab logic: querying, duplicate planning, inactive tabs, grouping, undo.
 // Nothing here calls an AI — everything in this file is deterministic.
 
-import { normalizeUrl, isNewTabPage } from './urlkey.js';
+import { normalizeUrl, isNewTabPage, displayHost } from './urlkey.js';
 import { t, tn } from './i18n.js';
 
 export function tabUrl(tab) {
@@ -123,13 +123,29 @@ export async function undoClose() {
 // ------------------------------------------------------------ search matches
 
 /**
- * What "close all matches" may close from a list of search results: everything
- * but pinned tabs, which are left alone and counted. Order is kept, so the best
- * match stays first in the preview.
+ * What "close all matches" may close from a list of search results.
+ *
+ * The palette's fuzzy search accepts any in-order subsequence of letters, so a
+ * short query also lists tabs that don't contain it. Jumping to a tab can
+ * afford that; closing can't. Only tabs where every word of the query appears
+ * literally in the title or host qualify, and pinned tabs are always left
+ * alone. Both kinds of left-out tab are counted so the UI can say so. Order is
+ * kept, so the best match stays first in the preview.
  */
-export function closableMatches(tabs) {
-  const close = tabs.filter((tab) => !tab.pinned);
-  return { close, skippedPinned: tabs.length - close.length };
+export function closableMatches(tabs, query) {
+  const terms = String(query ?? '').toLowerCase().split(/\s+/).filter(Boolean);
+  if (!terms.length) return { close: [], skippedPinned: 0, skippedLoose: 0 };
+
+  const exact = tabs.filter((tab) => {
+    const haystack = `${tab.title || ''} ${displayHost(tabUrl(tab))}`.toLowerCase();
+    return terms.every((term) => haystack.includes(term));
+  });
+  const close = exact.filter((tab) => !tab.pinned);
+  return {
+    close,
+    skippedPinned: exact.length - close.length,
+    skippedLoose: tabs.length - exact.length,
+  };
 }
 
 // ------------------------------------------------------------ inactive tabs

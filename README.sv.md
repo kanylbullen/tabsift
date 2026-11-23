@@ -35,8 +35,10 @@ hellre vill se hela listan.
 
 **Stäng det en sökning hittar.** När en sökning i paletten har träffar visas en
 knapp **Stäng N träffar** (eller `Ctrl+E`) som förhandsvisar att stänga alla:
-varje träff är förbockad, bocka ur det du vill behålla och bekräfta. Fästa
-flikar utelämnas och räknas. Stängningen går att ångra i tio minuter.
+varje träff är förbockad, bocka ur det du vill behålla och bekräfta. Bara flikar
+som innehåller det du skrivit ordagrant tas med — den luddiga sökningen listar
+också vagare träffar, och de utelämnas och räknas, precis som fästa flikar.
+Stängningen går att ångra i tio minuter.
 
 ---
 

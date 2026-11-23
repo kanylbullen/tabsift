@@ -36,8 +36,10 @@ rather see the whole list.
 
 **Close what a search finds.** When a search in the palette has results, a
 **Close N matches** button (or `Ctrl+E`) previews closing all of them: every
-match is checked, uncheck what you want to keep, then confirm. Pinned tabs are
-left out and counted. The close can be undone for ten minutes.
+match is checked, uncheck what you want to keep, then confirm. Only tabs that
+literally contain what you typed are included — the fuzzy search also lists
+looser matches, and those are left out and counted, like pinned tabs. The close
+can be undone for ten minutes.
 
 ---
 

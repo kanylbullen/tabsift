@@ -177,7 +177,7 @@ function renderSearch() {
 /** "Close N matches" shows only while a query has something closable to offer. */
 function updateMatchesButton() {
   const q = els.query.value.trim();
-  const n = q ? closableMatches(visible.map((item) => item.tab)).close.length : 0;
+  const n = closableMatches(visible.map((item) => item.tab), q).close.length;
   els.matches.hidden = n === 0;
   if (!n) return;
   els.matches.textContent = tn('btn_close_matches', n);
@@ -529,7 +529,10 @@ async function enterStale() {
 
 /** Previews closing every (non-pinned) tab the current search shows. */
 function enterMatches() {
-  const { close, skippedPinned } = closableMatches(visible.map((item) => item.tab));
+  const { close, skippedPinned, skippedLoose } = closableMatches(
+    visible.map((item) => item.tab),
+    els.query.value,
+  );
   if (!close.length) return;
   stalePlan = close;
   staleKind = 'matches';
@@ -538,7 +541,10 @@ function enterMatches() {
   mode = 'stale';
   els.query.disabled = true;
   render();
-  setNotice(skippedPinned ? tn('matches_pinned', skippedPinned) : '');
+  setNotice([
+    skippedPinned ? tn('matches_pinned', skippedPinned) : '',
+    skippedLoose ? tn('matches_loose', skippedLoose) : '',
+  ].filter(Boolean).join(' '));
 }
 
 function backToSearch() {

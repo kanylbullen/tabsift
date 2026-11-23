@@ -129,12 +129,21 @@ eq('age in weeks', formatAge(30 * DAY), '4 weeks');
 eq('age in months', formatAge(90 * DAY), '3 mo');
 
 // --- search matches
-const found = [t(1,'https://a.se/'), t(2,'https://b.se/',{pinned:true}), t(3,'https://c.se/',{active:true}), t(4,'https://d.se/')];
-const cm = closableMatches(found);
-eq('close-matches leaves pinned tabs alone', cm.close.map(x=>x.id), [1, 3, 4]);
-eq('close-matches counts the pinned it skipped', cm.skippedPinned, 1);
-eq('close-matches keeps the ranking order', closableMatches([found[3], found[0]]).close.map(x=>x.id), [4, 1]);
-eq('no matches closes nothing', closableMatches([]), { close: [], skippedPinned: 0 });
+const found = [
+  t(1, 'https://a.se/', { title: 'Alpha notes' }),
+  t(2, 'https://b.se/', { title: 'Beta notes', pinned: true }),
+  t(3, 'https://c.se/', { title: 'Gamma notes', active: true }),
+  t(4, 'https://d.se/', { title: 'Nota bene is good' }),
+];
+const cm = closableMatches(found, 'notes');
+eq('close-matches takes tabs that literally contain the query', cm.close.map(x=>x.id), [1, 3]);
+eq('close-matches leaves pinned tabs alone and counts them', cm.skippedPinned, 1);
+eq('close-matches leaves fuzzy-only matches out and counts them', cm.skippedLoose, 1);
+eq('close-matches matches on the host too', closableMatches(found, 'c.se').close.map(x=>x.id), [3]);
+eq('close-matches needs every word', closableMatches(found, 'alpha notes').close.map(x=>x.id), [1]);
+eq('close-matches ignores case', closableMatches(found, 'GAMMA').close.map(x=>x.id), [3]);
+eq('close-matches keeps the ranking order', closableMatches([found[2], found[0]], 'notes').close.map(x=>x.id), [3, 1]);
+eq('an empty query closes nothing', closableMatches(found, '  '), { close: [], skippedPinned: 0, skippedLoose: 0 });
 
 // --- colors
 eq('color is deterministic', colorFor('Code'), colorFor('Code'));
