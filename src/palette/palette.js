@@ -637,9 +637,9 @@ document.addEventListener('keydown', (e) => {
     return;
   }
 
-  if (e.ctrlKey && (e.key === 'e' || e.key === 'E')) {
+  if (e.ctrlKey && (e.key === 'e' || e.key === 'E') && mode === 'search' && !els.matches.hidden) {
     e.preventDefault();
-    if (mode === 'search' && !els.matches.hidden) enterMatches();
+    enterMatches();
     return;
   }
 

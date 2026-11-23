@@ -91,10 +91,18 @@ export async function closeWithUndo(toClose) {
     pinned: tab.pinned,
   }));
 
-  await chrome.tabs.remove(toClose.map((tab) => tab.id));
+  // Save before closing: when the active tab is among them the popup is
+  // dismissed along with it, and anything after the removal may never run.
   await chrome.storage.local.set({
     lastClose: { at: Date.now(), tabs: undo },
   });
+  try {
+    await chrome.tabs.remove(toClose.map((tab) => tab.id));
+  } catch (err) {
+    // Nothing (or not everything) closed, so an undo would open duplicates.
+    await chrome.storage.local.remove('lastClose');
+    throw err;
+  }
 
   return { closed: toClose.length };
 }

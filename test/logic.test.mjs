@@ -5,7 +5,7 @@ import { categorize, RULES } from '../src/lib/rules.js';
 import { PROVIDERS } from '../src/lib/ai/index.js';
 import { MODELS } from '../src/lib/ai/anthropic.js';
 import { DEFAULTS, LEGACY_MODELS } from '../src/lib/settings.js';
-import { planDedupe, planStale, closableMatches, formatAge, colorFor } from '../src/lib/tabs.js';
+import { planDedupe, planStale, closableMatches, closeWithUndo, formatAge, colorFor } from '../src/lib/tabs.js';
 import { escapeXml, describe as omniDescribe, buildSuggestions } from '../src/lib/omnibox.js';
 
 // chrome.i18n stand-in with the same substitution rules as the browser:
@@ -144,6 +144,23 @@ eq('close-matches needs every word', closableMatches(found, 'alpha notes').close
 eq('close-matches ignores case', closableMatches(found, 'GAMMA').close.map(x=>x.id), [3]);
 eq('close-matches keeps the ranking order', closableMatches([found[2], found[0]], 'notes').close.map(x=>x.id), [3, 1]);
 eq('an empty query closes nothing', closableMatches(found, '  '), { close: [], skippedPinned: 0, skippedLoose: 0 });
+
+// --- undo record
+const calls = [];
+const stubChrome = (removeFails) => ({
+  ...globalThis.chrome,
+  tabs: { remove: async () => { calls.push('remove'); if (removeFails) throw new Error('no such tab'); } },
+  storage: { local: { set: async () => void calls.push('save'), remove: async () => void calls.push('clear') } },
+});
+globalThis.chrome = stubChrome(false);
+await closeWithUndo([t(1, 'https://a.se/')]);
+eq('undo record is saved before tabs are closed', calls, ['save', 'remove']);
+calls.length = 0;
+globalThis.chrome = stubChrome(true);
+let threw = false;
+try { await closeWithUndo([t(1, 'https://a.se/')]); } catch { threw = true; }
+eq('undo record is dropped when closing fails', [threw, calls], [true, ['save', 'remove', 'clear']]);
+globalThis.chrome = { i18n: fakeI18n('en') };
 
 // --- colors
 eq('color is deterministic', colorFor('Code'), colorFor('Code'));
