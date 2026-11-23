@@ -33,6 +33,11 @@ Ett tillägg som påstår annat gör det via en overlay, inte via adressfältet.
 `Ctrl+Shift+K` öppnar samma sökning som en palett med förhandsvisning, om du
 hellre vill se hela listan.
 
+**Stäng det en sökning hittar.** När en sökning i paletten har träffar visas en
+knapp **Stäng N träffar** (eller `Ctrl+E`) som förhandsvisar att stänga alla:
+varje träff är förbockad, bocka ur det du vill behålla och bekräfta. Fästa
+flikar utelämnas och räknas. Stängningen går att ångra i tio minuter.
+
 ---
 
 ## Installera
@@ -232,6 +237,7 @@ Store och Edge Add-ons. Texter, bilder och alla formulärsvar står i
 | `Ctrl+Shift+U` | Städa dubbletter direkt (utan förhandsvisning) |
 | — | Gruppera direkt (ingen standardtangent) |
 | `Ctrl+D` / `Ctrl+G` / `Ctrl+I` | I paletten: förhandsvisa dubbletter / gruppering / inaktiva flikar |
+| `Ctrl+E` | I paletten, när en sökning har träffar: förhandsvisa att stänga alla |
 | `Mellanslag` | I listan med inaktiva flikar: behåll eller stäng fliken |
 | `↑` `↓` `Enter` | Navigera och hoppa till flik |
 | `Esc` | Tillbaka, sen stäng |

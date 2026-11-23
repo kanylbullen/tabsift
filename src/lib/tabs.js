@@ -120,6 +120,18 @@ export async function undoClose() {
   return { reopened: lastClose.tabs.length };
 }
 
+// ------------------------------------------------------------ search matches
+
+/**
+ * What "close all matches" may close from a list of search results: everything
+ * but pinned tabs, which are left alone and counted. Order is kept, so the best
+ * match stays first in the preview.
+ */
+export function closableMatches(tabs) {
+  const close = tabs.filter((tab) => !tab.pinned);
+  return { close, skippedPinned: tabs.length - close.length };
+}
+
 // ------------------------------------------------------------ inactive tabs
 
 const DAY = 24 * 60 * 60 * 1000;

@@ -51,7 +51,14 @@ header { padding: 10px 12px 8px; border-bottom: 1px solid var(--line); }
 }
 #query:focus { outline: 2px solid var(--accent); outline-offset: -1px; border-color: transparent; }
 
-.counts { margin-top: 6px; color: var(--muted); font-size: 11.5px; }
+.counts-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  margin-top: 6px; min-height: 24px;
+}
+.counts {
+  min-width: 0; color: var(--muted); font-size: 11.5px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 .counts b { color: var(--fg); font-weight: 600; }
 
 main { flex: 1; overflow-y: auto; min-height: 120px; }
@@ -138,6 +145,8 @@ footer {
   background: var(--bg); color: var(--fg); cursor: pointer;
 }
 .action:hover { border-color: var(--accent); color: var(--accent); }
+.action.compact { flex: none; padding: 2px 8px; font-size: 11.5px; white-space: nowrap; }
+.action.compact:hover { border-color: var(--danger); color: var(--danger); }
 .action.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
 .action.primary:hover { opacity: .9; color: #fff; }
 .action.ghost { border-color: transparent; color: var(--muted); }

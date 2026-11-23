@@ -3,7 +3,7 @@
   Store screenshot frame: 1280 x 800, a caption on the left and the real palette
   (src/palette/palette.html) on the right, running against stub.js.
 
-  Query: ?lang=en|sv&mode=search|dedupe|stale
+  Query: ?lang=en|sv&mode=search|dedupe|stale|matches
   Served from the repository root (scripts/screenshots/shoot.py does that).
 -->
 <html>
@@ -46,11 +46,13 @@
           search: ['Find any tab in a keystroke', 'Fuzzy search across every open tab — or type t and a space in the address bar.'],
           dedupe: ['Close duplicates, keep the right one', 'Tracking parameters and fragments are ignored. Pinned tabs are never closed, and everything can be undone.'],
           stale: ['Clear out tabs you no longer use', 'See tabs that have been inactive for days, oldest first. Uncheck what you want to keep.'],
+          matches: ['Close everything a search finds', 'Search, then close all matching tabs in one go. Review the list and uncheck what you want to keep.'],
         },
         sv: {
           search: ['Hitta vilken flik som helst', 'Fuzzy sökning bland alla öppna flikar — eller skriv t och mellanslag i adressfältet.'],
           dedupe: ['Stäng dubbletter, behåll rätt flik', 'Spårningsparametrar och fragment ignoreras. Fästa flikar stängs aldrig, och allt går att ångra.'],
           stale: ['Rensa flikar du inte använder', 'Se flikar som varit inaktiva i flera dagar, äldst först. Bocka ur det du vill behålla.'],
+          matches: ['Stäng allt en sökning hittar', 'Sök och stäng alla träffar i ett svep. Granska listan och bocka ur det du vill behålla.'],
         },
       };
       const [title, text] = CAPTIONS[DEMO.lang][DEMO.mode];
@@ -77,6 +79,11 @@
             key('d');
           } else if (DEMO.mode === 'stale') {
             key('i');
+          } else if (DEMO.mode === 'matches') {
+            const input = doc.getElementById('query');
+            input.value = 'notes';
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            key('e');
           }
           // A real popup is as tall as its content.
           setTimeout(() => { frame.style.height = `${Math.ceil(doc.body.getBoundingClientRect().height)}px`; }, 300);

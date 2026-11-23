@@ -5,7 +5,7 @@ import { categorize, RULES } from '../src/lib/rules.js';
 import { PROVIDERS } from '../src/lib/ai/index.js';
 import { MODELS } from '../src/lib/ai/anthropic.js';
 import { DEFAULTS, LEGACY_MODELS } from '../src/lib/settings.js';
-import { planDedupe, planStale, formatAge, colorFor } from '../src/lib/tabs.js';
+import { planDedupe, planStale, closableMatches, formatAge, colorFor } from '../src/lib/tabs.js';
 import { escapeXml, describe as omniDescribe, buildSuggestions } from '../src/lib/omnibox.js';
 
 // chrome.i18n stand-in with the same substitution rules as the browser:
@@ -127,6 +127,14 @@ eq('age one day', formatAge(DAY), '1 day');
 eq('age in days', formatAge(10 * DAY), '10 days');
 eq('age in weeks', formatAge(30 * DAY), '4 weeks');
 eq('age in months', formatAge(90 * DAY), '3 mo');
+
+// --- search matches
+const found = [t(1,'https://a.se/'), t(2,'https://b.se/',{pinned:true}), t(3,'https://c.se/',{active:true}), t(4,'https://d.se/')];
+const cm = closableMatches(found);
+eq('close-matches leaves pinned tabs alone', cm.close.map(x=>x.id), [1, 3, 4]);
+eq('close-matches counts the pinned it skipped', cm.skippedPinned, 1);
+eq('close-matches keeps the ranking order', closableMatches([found[3], found[0]]).close.map(x=>x.id), [4, 1]);
+eq('no matches closes nothing', closableMatches([]), { close: [], skippedPinned: 0 });
 
 // --- colors
 eq('color is deterministic', colorFor('Code'), colorFor('Code'));

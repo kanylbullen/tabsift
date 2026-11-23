@@ -23,6 +23,8 @@
     ['Fix flaky retry in upload queue · Pull Request #482', 'https://github.com/acme/uploader/pull/482?utm_source=slack', icon('G', '#24292f'), 5 * H],
     ['Sprint board – Uploader', 'https://acme.atlassian.net/jira/software/projects/UP/boards/3', icon('J', '#0c66e4'), 6 * H],
     ['Design review notes', 'https://docs.google.com/document/d/1x0demo', icon('D', '#1a73e8'), 9 * H],
+    ['Meeting notes – Q4 planning', 'https://www.notion.so/acme/Q4-planning', icon('N', '#000000'), 5 * H],
+    ['Reading notes – Data-Intensive Apps', 'https://www.example-books.com/notes/ddia', icon('B', '#b45309'), 3 * D],
     ['Release notes 4.2 – draft', 'https://www.notion.so/acme/Release-notes-4-2', icon('N', '#000000'), 1.2 * D],
     ['Rust ownership explained in 10 minutes', 'https://www.youtube.com/watch?v=demo', icon('Y', '#ff0000'), 2 * D],
     ['Bloom filter - Wikipedia', 'https://en.wikipedia.org/wiki/Bloom_filter', icon('W', '#636466'), 9 * D],

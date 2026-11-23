@@ -4,7 +4,7 @@
 import { getSettings } from '../lib/settings.js';
 import {
   queryTabs, tabUrl, planDedupe, applyDedupe, undoClose,
-  planStale, closeWithUndo, formatAge, applyGrouping, focusTab, colorFor,
+  planStale, closableMatches, closeWithUndo, formatAge, applyGrouping, focusTab, colorFor,
 } from '../lib/tabs.js';
 import { normalizeUrl, displayHost } from '../lib/urlkey.js';
 import { planGrouping } from '../lib/grouping.js';
@@ -20,6 +20,7 @@ const els = {
   dedupe: document.getElementById('btn-dedupe'),
   group: document.getElementById('btn-group'),
   stale: document.getElementById('btn-stale'),
+  matches: document.getElementById('btn-matches'),
   undo: document.getElementById('btn-undo'),
   options: document.getElementById('btn-options'),
 };
@@ -34,6 +35,8 @@ let groupPlan = null;
 let stalePlan = null;
 /** Tab ids the user unchecked in the inactive-tab preview. */
 let staleKeep = new Set();
+/** Which cleanup the shared checkbox list shows: 'stale' or 'matches'. */
+let staleKind = 'stale';
 let visible = [];
 let cursor = 0;
 
@@ -167,7 +170,18 @@ function renderSearch() {
 
   els.empty.hidden = visible.length > 0;
   els.empty.textContent = visible.length ? '' : t('no_match');
+  updateMatchesButton();
   scrollToCursor();
+}
+
+/** "Close N matches" shows only while a query has something closable to offer. */
+function updateMatchesButton() {
+  const q = els.query.value.trim();
+  const n = q ? closableMatches(visible.map((item) => item.tab)).close.length : 0;
+  els.matches.hidden = n === 0;
+  if (!n) return;
+  els.matches.textContent = tn('btn_close_matches', n);
+  els.matches.title = 'Ctrl+E';
 }
 
 function renderRow(item, i) {
@@ -330,7 +344,7 @@ function renderStale() {
   visible = stalePlan ?? [];
   if (!visible.length) {
     els.empty.hidden = false;
-    els.empty.textContent = t('stale_none', settings.stale.days);
+    els.empty.textContent = staleKind === 'matches' ? t('no_match') : t('stale_none', settings.stale.days);
     return;
   }
   cursor = Math.min(cursor, visible.length - 1);
@@ -372,7 +386,7 @@ function renderStale() {
     text.append(titleEl, sub);
     li.appendChild(text);
 
-    li.appendChild(chip(formatAge(now - tab.lastAccessed)));
+    if (staleKind === 'stale') li.appendChild(chip(formatAge(now - tab.lastAccessed)));
 
     li.addEventListener('click', () => {
       cursor = i;
@@ -449,8 +463,12 @@ function renderFooter() {
 
 function render() {
   renderCounts();
-  if (mode === 'search') renderSearch();
-  else renderPlanView();
+  if (mode === 'search') {
+    renderSearch();
+  } else {
+    els.matches.hidden = true;
+    renderPlanView();
+  }
   renderFooter();
 }
 
@@ -501,6 +519,7 @@ async function enterStale() {
   setNotice('');
   const fresh = await queryTabs({ allWindows: settings.stale.allWindows });
   stalePlan = planStale(fresh, Date.now(), settings.stale);
+  staleKind = 'stale';
   staleKeep = new Set();
   cursor = 0;
   mode = 'stale';
@@ -508,11 +527,26 @@ async function enterStale() {
   render();
 }
 
+/** Previews closing every (non-pinned) tab the current search shows. */
+function enterMatches() {
+  const { close, skippedPinned } = closableMatches(visible.map((item) => item.tab));
+  if (!close.length) return;
+  stalePlan = close;
+  staleKind = 'matches';
+  staleKeep = new Set();
+  cursor = 0;
+  mode = 'stale';
+  els.query.disabled = true;
+  render();
+  setNotice(skippedPinned ? tn('matches_pinned', skippedPinned) : '');
+}
+
 function backToSearch() {
   mode = 'search';
   dedupePlan = null;
   groupPlan = null;
   stalePlan = null;
+  staleKind = 'stale';
   cursor = 0;
   els.query.disabled = false;
   els.query.focus();
@@ -528,11 +562,12 @@ async function confirmDedupe() {
 }
 
 async function confirmStale() {
+  const kind = staleKind;
   const toClose = (stalePlan ?? []).filter((tab) => !staleKeep.has(tab.id));
   const { closed } = await closeWithUndo(toClose);
   await load();
   backToSearch();
-  setNotice(closed ? tn('closed_stale', closed) : t('closed_none'));
+  setNotice(closed ? tn(kind === 'matches' ? 'closed_n' : 'closed_stale', closed) : t('closed_none'));
 }
 
 async function confirmGroup() {
@@ -565,6 +600,7 @@ els.undo.addEventListener('click', async () => {
   setNotice(tn('reopened', reopened));
 });
 
+els.matches.addEventListener('click', enterMatches);
 els.options.addEventListener('click', () => chrome.runtime.openOptionsPage());
 
 els.query.addEventListener('input', () => {
@@ -592,6 +628,12 @@ document.addEventListener('keydown', (e) => {
   if (e.ctrlKey && (e.key === 'i' || e.key === 'I')) {
     e.preventDefault();
     if (mode === 'search') void enterStale();
+    return;
+  }
+
+  if (e.ctrlKey && (e.key === 'e' || e.key === 'E')) {
+    e.preventDefault();
+    if (mode === 'search' && !els.matches.hidden) enterMatches();
     return;
   }
 
