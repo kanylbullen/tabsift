@@ -615,5 +615,53 @@
   },
   "opt_test_empty": {
     "message": "Got a reply, but without any grouping."
+  },
+  "btn_close_matches_one": {
+    "message": "Close $P1$ match",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "btn_close_matches_other": {
+    "message": "Close $P1$ matches",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "matches_pinned_one": {
+    "message": "$P1$ pinned tab is left out.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "matches_pinned_other": {
+    "message": "$P1$ pinned tabs are left out.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "matches_loose_one": {
+    "message": "$P1$ looser match is left out.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "matches_loose_other": {
+    "message": "$P1$ looser matches are left out.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
   }
 }

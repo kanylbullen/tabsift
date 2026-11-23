@@ -615,5 +615,53 @@
   },
   "opt_test_empty": {
     "message": "Svar mottaget men utan gruppindelning."
+  },
+  "btn_close_matches_one": {
+    "message": "Stäng $P1$ träff",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "btn_close_matches_other": {
+    "message": "Stäng $P1$ träffar",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "matches_pinned_one": {
+    "message": "$P1$ fäst flik utelämnas.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "matches_pinned_other": {
+    "message": "$P1$ fästa flikar utelämnas.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "matches_loose_one": {
+    "message": "$P1$ vagare träff utelämnas.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "matches_loose_other": {
+    "message": "$P1$ vagare träffar utelämnas.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
   }
 }

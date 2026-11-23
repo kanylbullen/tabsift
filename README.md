@@ -34,6 +34,13 @@ address bar.
 `Ctrl+Shift+K` opens the same search as a palette with a preview, if you'd
 rather see the whole list.
 
+**Close what a search finds.** When a search in the palette has results, a
+**Close N matches** button (or `Ctrl+E`) previews closing all of them: every
+match is checked, uncheck what you want to keep, then confirm. Only tabs that
+literally contain what you typed are included — the fuzzy search also lists
+looser matches, and those are left out and counted, like pinned tabs. The close
+can be undone for ten minutes.
+
 ---
 
 ## Install
@@ -237,6 +244,7 @@ Store and Edge Add-ons. Texts, images and every form answer are in
 | `Ctrl+Shift+U` | Clean up duplicates directly (no preview) |
 | — | Group directly (no default key) |
 | `Ctrl+D` / `Ctrl+G` / `Ctrl+I` | In the palette: preview duplicates / grouping / inactive tabs |
+| `Ctrl+E` | In the palette, with a search showing results: preview closing all of them |
 | `Space` | In the inactive-tab list: keep or close the tab |
 | `↑` `↓` `Enter` | Navigate and jump to tab |
 | `Esc` | Back, then close |

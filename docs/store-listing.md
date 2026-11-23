@@ -49,8 +49,8 @@ python3 scripts/screenshots/shoot.py    # store/screenshots/<lang>-<n>-<view>.pn
 | Logo | — | `store/logo-300.png` (300 × 300) |
 | Screenshots | 1–5 at 1280 × 800, required | optional, 1280 × 800 |
 
-Screenshots: `en-1-search`, `en-2-dedupe`, `en-3-stale` for the English
-listing, `sv-…` for the Swedish one. They are rendered from the real palette
+Screenshots: `en-1-search`, `en-2-dedupe`, `en-3-stale`, `en-4-matches` for
+the English listing, `sv-…` for the Swedish one. They are rendered from the real palette
 against made-up tabs (`scripts/screenshots/stub.js`), so no real browsing ends
 up in a listing. Promo tiles are optional and skipped.
 
@@ -70,7 +70,8 @@ up in a listing. Promo tiles are optional and skipped.
 > Tabsift helps you find, clean up and organize open tabs.
 >
 > • Tab palette: press Ctrl+Shift+K and type a few letters to jump to any open
-> tab, in any window. Or type t and a space in the address bar.
+> tab, in any window. Or type t and a space in the address bar. Close
+> everything a search finds with one click, after a preview.
 > • Duplicates: see which tabs are the same page, even when tracking parameters
 > or fragments differ, and close the extra copies. Pinned tabs are never
 > closed.
@@ -100,7 +101,8 @@ Add language*, Edge *Store listings → Add a language*):
 >
 > • Flikpalett: tryck Ctrl+Shift+K och skriv några bokstäver för att hoppa
 > till vilken öppen flik som helst, i vilket fönster som helst. Eller skriv t
-> och mellanslag i adressfältet.
+> och mellanslag i adressfältet. Stäng allt en sökning hittar med ett klick,
+> efter en förhandsvisning.
 > • Dubbletter: se vilka flikar som är samma sida, även när
 > spårningsparametrar eller fragment skiljer sig, och stäng de extra
 > kopiorna. Fästa flikar stängs aldrig.
@@ -214,7 +216,7 @@ Partner Center → Edge → *Create new extension*:
    data boxes, certifications, privacy policy URL — all under *The forms*.
 5. **Store listings:** name and summary come from the manifest. Description
    from *Listing*. Logo `store/logo-300.png`. Screenshots optional; use the
-   three for the language. Add Swedish as a second language.
+   four for the language. Add Swedish as a second language.
 6. **Publish → Notes for certification:** the test instructions. Then
    **Publish (owner)**.
 
@@ -225,7 +227,7 @@ Developer Dashboard → *Add new item* → the same zip:
 1. **Package:** the upload.
 2. **Store listing:** description from *Listing*, category, language English,
    then *Add language* → Swedish. Store icon `store/icon-128.png`. Screenshots:
-   the three for each language. Homepage and support URLs.
+   the four for each language. Homepage and support URLs.
 3. **Privacy:** the same answers as Edge, with one justification per optional
    host permission. Data: *Web history*. Certifications. Policy URL.
 4. **Distribution:** Visibility **Public**. Regions: all.

@@ -21,7 +21,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / "store" / "screenshots"
-VIEWS = ["search", "dedupe", "stale"]
+VIEWS = ["search", "dedupe", "stale", "matches"]
 LANGS = ["en", "sv"]
 
 
