@@ -460,7 +460,7 @@
     "message": "Behörigheter"
   },
   "opt_perm_p": {
-    "message": "Tillägget begär `tabs`, `tabGroups`, `storage` och `commands`. Inga content scripts, ingen `<all_urls>`, ingen historik, inga bokmärken, ingen telemetri. Nätverksanrop görs bara till den AI-endpoint du själv väljer nedan, och behörigheten för den frågas separat."
+    "message": "Tillägget begär `tabs`, `tabGroups`, `storage`, `alarms` och `commands`. Inga content scripts, ingen `<all_urls>`, ingen historik, inga bokmärken, ingen telemetri. Nätverksanrop görs bara till den AI-endpoint du själv väljer nedan, och behörigheten för den frågas separat."
   },
   "opt_ai_h": {
     "message": "AI-backend"
@@ -658,6 +658,56 @@
   },
   "matches_loose_other": {
     "message": "$P1$ vagare träffar utelämnas.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_ac_h": {
+    "message": "Automatisk rensning"
+  },
+  "opt_ac_enable": {
+    "message": "Stäng flikar automatiskt när en regel nedan stämmer"
+  },
+  "opt_ac_grouped": {
+    "message": "Stäng även flikar som ligger i en grupp"
+  },
+  "opt_ac_add": {
+    "message": "Lägg till regel"
+  },
+  "opt_ac_placeholder": {
+    "message": "github.com"
+  },
+  "opt_ac_pattern": {
+    "message": "Domän eller mönster"
+  },
+  "opt_ac_hours": {
+    "message": "Timmar utan användning"
+  },
+  "opt_ac_unit": {
+    "message": "timmar oanvänd"
+  },
+  "opt_ac_remove": {
+    "message": "Ta bort regeln"
+  },
+  "opt_ac_hint": {
+    "message": "En flik stängs när den inte har använts på lika många timmar som regeln anger. `github.com` matchar också underdomäner; lägg till en sökväg (`github.com/pulls`) för att snäva in, eller använd `*` som jokertecken (`*.atlassian.net`). Fästa, aktiva och ljudspelande flikar stängs aldrig. Kontrolleras var femte minut medan webbläsaren är öppen, aldrig när den är stängd. Minsta värde: 0,1 timmar."
+  },
+  "opt_ac_log_h": {
+    "message": "Stängda automatiskt"
+  },
+  "opt_ac_log_empty": {
+    "message": "Inget har stängts automatiskt än."
+  },
+  "opt_ac_clear": {
+    "message": "Töm listan"
+  },
+  "opt_ac_reopen": {
+    "message": "Öppna igen"
+  },
+  "opt_ac_ago": {
+    "message": "för $P1$ sedan",
     "placeholders": {
       "p1": {
         "content": "$1"

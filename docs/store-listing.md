@@ -151,8 +151,12 @@ privacy policy and the code; reviewers compare them.
   content scripts.
 - `tabGroups` — to create, name and color tab groups when the user groups
   tabs.
-- `storage` — to keep the user's settings and the last cleanup (so it can be
-  undone) in local extension storage.
+- `storage` — to keep the user's settings, the last cleanup (so it can be
+  undone) and, if automatic cleanup is on, a list of the tabs it closed (so
+  they can be reopened) in local extension storage.
+- `alarms` — to wake the background worker every five minutes for the optional
+  automatic cleanup, which closes tabs matching the user's own rules after the
+  hours they set. Off by default.
 - Optional host permissions `http://localhost/*`, `http://127.0.0.1/*`,
   `https://api.anthropic.com/*`, `https://api.openai.com/*` — requested at
   runtime only if the user picks an AI provider for grouping, and only for

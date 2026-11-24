@@ -1,6 +1,6 @@
 # Tabsifts integritetspolicy
 
-*[English](PRIVACY.md) · Svenska* · Senast ändrad 2026-11-18
+*[English](PRIVACY.md) · Svenska* · Senast ändrad 2026-11-24
 
 Tabsift är ett webbläsartillägg för att hitta, städa upp och ordna öppna
 flikar. Den här sidan beskriver all data det hanterar. Varje påstående här går
@@ -28,6 +28,10 @@ din dator. Inget synkas till ditt webbläsarkonto.
   så att den går att ångra. Den raderas när du ångrar, när en ny städning
   ersätter den, eller första gången du öppnar paletten efter de tio minuter
   ångra gäller.
+
+- **Listan över automatiskt stängda flikar** (titel, adress och tid för varje,
+  de senaste 100), bara om du slår på automatisk rensning. Den gör att du kan
+  öppna en flik igen. Töm den i inställningarna när du vill.
 
 Tar du bort tillägget raderas allt.
 

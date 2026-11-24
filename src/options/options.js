@@ -4,6 +4,9 @@ import { MODELS as ANTHROPIC_MODELS } from '../lib/ai/anthropic.js';
 import { listModels as listOllamaModels } from '../lib/ai/ollama.js';
 import { availability as edgeAvailability } from '../lib/ai/edge.js';
 import { t, localizeDocument } from '../lib/i18n.js';
+import { MIN_HOURS, reopenAutoClosed } from '../lib/autoclose.js';
+import { formatAge } from '../lib/tabs.js';
+import { displayHost } from '../lib/urlkey.js';
 
 const $ = (id) => document.getElementById(id);
 let settings;
@@ -44,6 +47,11 @@ function fillForm() {
   $('s-grouped').checked = settings.stale.includeGrouped;
   $('s-windows').checked = settings.stale.allWindows;
 
+  $('ac-enabled').checked = settings.autoClose.enabled;
+  $('ac-grouped').checked = settings.autoClose.includeGrouped;
+  $('ac-rules').textContent = '';
+  for (const rule of settings.autoClose.rules) addRuleRow(rule);
+
   $('g-rules').checked = settings.grouping.useRules;
   $('g-ungrouped').checked = settings.grouping.onlyUngrouped;
   $('g-collapse').checked = settings.grouping.collapseNew;
@@ -83,6 +91,11 @@ function readForm() {
       includeGrouped: $('s-grouped').checked,
       allWindows: $('s-windows').checked,
     },
+    autoClose: {
+      enabled: $('ac-enabled').checked,
+      includeGrouped: $('ac-grouped').checked,
+      rules: readRules(),
+    },
     grouping: {
       useRules: $('g-rules').checked,
       onlyUngrouped: $('g-ungrouped').checked,
@@ -92,6 +105,104 @@ function readForm() {
     },
   };
 }
+
+// ------------------------------------------------------------ auto-close rules
+
+function addRuleRow(rule = { pattern: '', hours: 24 }) {
+  const row = document.createElement('div');
+  row.className = 'rule';
+
+  const pattern = document.createElement('input');
+  pattern.type = 'text';
+  pattern.className = 'pattern';
+  pattern.value = rule.pattern;
+  pattern.placeholder = t('opt_ac_placeholder');
+  pattern.setAttribute('aria-label', t('opt_ac_pattern'));
+  pattern.autocomplete = 'off';
+  pattern.spellcheck = false;
+
+  const hours = document.createElement('input');
+  hours.type = 'number';
+  hours.className = 'hours';
+  hours.min = String(MIN_HOURS);
+  hours.max = '8760';
+  hours.step = 'any';
+  hours.value = rule.hours;
+  hours.setAttribute('aria-label', t('opt_ac_hours'));
+
+  const unit = document.createElement('span');
+  unit.className = 'unit';
+  unit.textContent = t('opt_ac_unit');
+
+  const remove = document.createElement('button');
+  remove.type = 'button';
+  remove.className = 'remove';
+  remove.textContent = '×';
+  remove.title = t('opt_ac_remove');
+  remove.setAttribute('aria-label', t('opt_ac_remove'));
+  remove.addEventListener('click', () => {
+    row.remove();
+    void persist();
+  });
+
+  row.append(pattern, hours, unit, remove);
+  $('ac-rules').appendChild(row);
+  return pattern;
+}
+
+function readRules() {
+  const rules = [];
+  for (const row of $('ac-rules').querySelectorAll('.rule')) {
+    const pattern = row.querySelector('.pattern').value.trim();
+    if (!pattern) continue; // a row still being typed
+    const hours = Number(row.querySelector('.hours').value);
+    rules.push({
+      pattern,
+      hours: Math.max(MIN_HOURS, Math.min(8760, Math.round((hours || 24) * 100) / 100)),
+    });
+  }
+  return rules;
+}
+
+$('ac-add').addEventListener('click', () => addRuleRow().focus());
+// Rows are added later, so listen on their container.
+$('ac-rules').addEventListener('change', persist);
+
+// Tabs closed automatically, newest first, with a way back.
+async function renderLog() {
+  const { autoClosed = [] } = await chrome.storage.local.get('autoClosed');
+  const list = $('ac-log');
+  list.textContent = '';
+  $('ac-log-empty').hidden = autoClosed.length > 0;
+  $('ac-clear').hidden = autoClosed.length === 0;
+
+  const now = Date.now();
+  for (const entry of autoClosed) {
+    const li = document.createElement('li');
+    const what = document.createElement('div');
+    what.className = 'what';
+    const title = document.createElement('div');
+    title.className = 'title';
+    title.textContent = entry.title || entry.url;
+    const meta = document.createElement('div');
+    meta.className = 'meta';
+    meta.textContent = `${displayHost(entry.url)} · ${t('opt_ac_ago', formatAge(now - entry.at))}`;
+    what.append(title, meta);
+
+    const reopen = document.createElement('button');
+    reopen.type = 'button';
+    reopen.textContent = t('opt_ac_reopen');
+    reopen.addEventListener('click', () => void reopenAutoClosed(entry));
+
+    li.append(what, reopen);
+    list.appendChild(li);
+  }
+}
+
+$('ac-clear').addEventListener('click', () => chrome.storage.local.remove('autoClosed'));
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === 'local' && changes.autoClosed) void renderLog();
+});
 
 // --------------------------------------------------------------------- UI
 
@@ -220,4 +331,5 @@ for (const el of document.querySelectorAll('input, select')) {
   settings = await getSettings();
   fillForm();
   syncPanels();
+  await renderLog();
 })();

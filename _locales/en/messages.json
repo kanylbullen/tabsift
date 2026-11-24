@@ -460,7 +460,7 @@
     "message": "Permissions"
   },
   "opt_perm_p": {
-    "message": "The extension requests `tabs`, `tabGroups`, `storage` and `commands`. No content scripts, no `<all_urls>`, no history, no bookmarks, no telemetry. Network requests only go to the AI endpoint you choose below, and that permission is requested separately."
+    "message": "The extension requests `tabs`, `tabGroups`, `storage`, `alarms` and `commands`. No content scripts, no `<all_urls>`, no history, no bookmarks, no telemetry. Network requests only go to the AI endpoint you choose below, and that permission is requested separately."
   },
   "opt_ai_h": {
     "message": "AI backend"
@@ -658,6 +658,56 @@
   },
   "matches_loose_other": {
     "message": "$P1$ looser matches are left out.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_ac_h": {
+    "message": "Automatic cleanup"
+  },
+  "opt_ac_enable": {
+    "message": "Close tabs automatically when a rule below matches"
+  },
+  "opt_ac_grouped": {
+    "message": "Also close tabs that are in a group"
+  },
+  "opt_ac_add": {
+    "message": "Add rule"
+  },
+  "opt_ac_placeholder": {
+    "message": "github.com"
+  },
+  "opt_ac_pattern": {
+    "message": "Domain or pattern"
+  },
+  "opt_ac_hours": {
+    "message": "Hours without use"
+  },
+  "opt_ac_unit": {
+    "message": "hours unused"
+  },
+  "opt_ac_remove": {
+    "message": "Remove rule"
+  },
+  "opt_ac_hint": {
+    "message": "A tab is closed once it has not been used for as many hours as its rule says. `github.com` also matches its subdomains; add a path (`github.com/pulls`) to narrow it, or use `*` as a wildcard (`*.atlassian.net`). Pinned, active and audible tabs are never closed. Checked every five minutes while the browser is open, never in a browser that is closed. Smallest value: 0.1 hours."
+  },
+  "opt_ac_log_h": {
+    "message": "Closed automatically"
+  },
+  "opt_ac_log_empty": {
+    "message": "Nothing has been closed automatically yet."
+  },
+  "opt_ac_clear": {
+    "message": "Clear the list"
+  },
+  "opt_ac_reopen": {
+    "message": "Reopen"
+  },
+  "opt_ac_ago": {
+    "message": "$P1$ ago",
     "placeholders": {
       "p1": {
         "content": "$1"

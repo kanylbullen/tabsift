@@ -105,6 +105,24 @@
     </section>
 
     <section>
+      <h2 data-i18n="opt_ac_h"></h2>
+      <label class="check"><input type="checkbox" id="ac-enabled" /> <span data-i18n="opt_ac_enable"></span></label>
+      <label class="check"><input type="checkbox" id="ac-grouped" /> <span data-i18n="opt_ac_grouped"></span></label>
+      <div id="ac-rules" class="rules"></div>
+      <div class="row">
+        <button id="ac-add" type="button" data-i18n="opt_ac_add"></button>
+      </div>
+      <p class="hint" data-i18n="opt_ac_hint"></p>
+
+      <h3 data-i18n="opt_ac_log_h"></h3>
+      <ul id="ac-log" class="log"></ul>
+      <p id="ac-log-empty" class="hint" data-i18n="opt_ac_log_empty"></p>
+      <div class="row">
+        <button id="ac-clear" type="button" data-i18n="opt_ac_clear" hidden></button>
+      </div>
+    </section>
+
+    <section>
       <h2 data-i18n="opt_group_h"></h2>
       <label class="check"><input type="checkbox" id="g-rules" /> <span data-i18n="opt_g_rules"></span></label>
       <label class="check"><input type="checkbox" id="g-ungrouped" /> <span data-i18n="opt_g_ungrouped"></span></label>

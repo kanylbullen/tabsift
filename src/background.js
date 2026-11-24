@@ -1,11 +1,12 @@
-// Service worker. Only handles keyboard commands — the palette does everything
-// else itself in its own popup context, so there is no message channel to abuse
-// and no state that can go stale.
+// Service worker. Handles keyboard commands and the automatic-cleanup alarm —
+// the palette does everything else itself in its own popup context, so there is
+// no message channel to abuse and no state that can go stale.
 
 import { getSettings } from './lib/settings.js';
 import { queryTabs, planDedupe, applyDedupe, applyGrouping } from './lib/tabs.js';
 import { planGrouping } from './lib/grouping.js';
 import { registerOmnibox } from './lib/omnibox.js';
+import { planAutoClose, applyAutoClose } from './lib/autoclose.js';
 
 // Must be registered synchronously at the top of the module — otherwise the
 // service worker isn't woken when the user types the keyword in the address bar.
@@ -49,6 +50,34 @@ chrome.commands.onCommand.addListener((command) => {
     flashBadge('!', '#dc2626');
   });
 });
+
+// ------------------------------------------------------------ automatic cleanup
+
+const SWEEP = 'auto-close';
+
+/** Alarms can be lost when the browser restarts, so make sure one exists every
+ *  time the worker starts. The first sweep waits a few minutes, which gives
+ *  restored tabs time to settle. */
+async function ensureSweepAlarm() {
+  if (!(await chrome.alarms.get(SWEEP))) {
+    chrome.alarms.create(SWEEP, { delayInMinutes: 5, periodInMinutes: 5 });
+  }
+}
+
+async function runAutoClose() {
+  const { autoClose } = await getSettings();
+  if (!autoClose.enabled) return;
+  const tabs = await queryTabs({ allWindows: true });
+  const plan = planAutoClose(tabs, Date.now(), autoClose);
+  await applyAutoClose(plan);
+}
+
+// Registered at the top level so the worker is woken for it.
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name !== SWEEP) return;
+  runAutoClose().catch((err) => console.error('[tabsift] auto-close', err));
+});
+ensureSweepAlarm().catch((err) => console.error('[tabsift] alarm', err));
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === 'install') chrome.runtime.openOptionsPage();

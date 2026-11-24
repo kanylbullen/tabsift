@@ -58,7 +58,7 @@ Change keyboard shortcuts at `edge://extensions/shortcuts`.
 ## Permissions
 
 ```json
-"permissions": ["tabs", "tabGroups", "storage"],
+"permissions": ["tabs", "tabGroups", "storage", "alarms"],
 "optional_host_permissions": [
   "http://localhost/*", "http://127.0.0.1/*",
   "https://api.anthropic.com/*", "https://api.openai.com/*"
@@ -69,7 +69,8 @@ Change keyboard shortcuts at `edge://extensions/shortcuts`.
 |---|---|
 | `tabs` | Read tab titles and URLs. Without it everything else is pointless. |
 | `tabGroups` | Create, name and color groups. |
-| `storage` | Settings and the undo list, in `chrome.storage.local`. |
+| `storage` | Settings, the undo list and the automatic-cleanup log, in `chrome.storage.local`. |
+| `alarms` | Wake the background worker every five minutes for automatic cleanup. No install warning. |
 | `commands` | Keyboard shortcuts. Implicit via `manifest.json`. |
 
 There are **no** content scripts, no `<all_urls>`, no `webRequest`, no history,
@@ -169,6 +170,25 @@ is no keyboard shortcut that closes directly without a preview.
 If it doesn't, every tab looks freshly opened after a restart, and fewer tabs
 are suggested than expected. Never more.
 
+## How automatic cleanup works
+
+Off by default. In the settings you turn it on and add rules: a domain or
+pattern and a number of hours, for example `github.com` and 24. Every five
+minutes, while the browser is open, tabs that match a rule and haven't been
+active for that long are closed (same `lastAccessed` timestamp as above).
+
+- `github.com` matches that host and its subdomains. `github.com/pulls` only
+  matches paths starting with `/pulls`. `*` is a wildcard: `*.atlassian.net`.
+- When several rules match, the most specific (longest) pattern decides.
+- Pinned, active and audible tabs are never closed. Tabs in a group are left
+  alone unless you tick *Also close tabs that are in a group*. Tabs without a
+  timestamp, and anything that isn't an http(s) page, are never touched.
+- Each automatically closed tab goes into a list in the settings (the latest
+  100: title, address, when) with a **Reopen** button. The ten-minute undo in
+  the palette only covers cleanups you started yourself.
+- The first sweep runs five minutes after the browser starts, so restored tabs
+  have time to settle. Nothing runs while the browser is closed.
+
 ## Languages
 
 The extension follows the browser language: Swedish if Edge/Chrome runs in
@@ -191,6 +211,7 @@ src/
     fuzzy.js             subsequence matching for the palette
     rules.js             domain → category
     tabs.js              query, dedupe plan, inactive tabs, group application, undo
+    autoclose.js         rule patterns, what is due, closing + log
     grouping.js          rules first, then AI
     omnibox.js           address bar search behind the `t` keyword
     i18n.js              _locales lookup, `code` and [[key]] in strings

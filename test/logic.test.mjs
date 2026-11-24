@@ -6,6 +6,7 @@ import { PROVIDERS } from '../src/lib/ai/index.js';
 import { MODELS } from '../src/lib/ai/anthropic.js';
 import { DEFAULTS, LEGACY_MODELS } from '../src/lib/settings.js';
 import { planDedupe, planStale, closableMatches, closeWithUndo, formatAge, colorFor } from '../src/lib/tabs.js';
+import { parsePattern, matchesPattern, planAutoClose, applyAutoClose, reopenAutoClosed } from '../src/lib/autoclose.js';
 import { escapeXml, describe as omniDescribe, buildSuggestions } from '../src/lib/omnibox.js';
 
 // chrome.i18n stand-in with the same substitution rules as the browser:
@@ -161,6 +162,66 @@ let threw = false;
 try { await closeWithUndo([t(1, 'https://a.se/')]); } catch { threw = true; }
 eq('undo record is dropped when closing fails', [threw, calls], [true, ['save', 'remove', 'clear']]);
 globalThis.chrome = { i18n: fakeI18n('en') };
+
+// --- automatic cleanup
+const AC_HR = 3_600_000;
+const AC_NOW = 1_000 * AC_HR;
+const acTab = (h, extra = {}) => ({ id: 1, url: 'https://github.com/a/b', lastAccessed: AC_NOW - h * AC_HR, groupId: -1, ...extra });
+const acHit = (pat, url) => matchesPattern(parsePattern(pat), url);
+const acDue = (tabs, rules, opts = {}) => planAutoClose(tabs, AC_NOW, { rules, ...opts }).map((d) => d.tab.id);
+
+eq('host pattern matches the host', acHit('github.com', 'https://github.com/x'), true);
+eq('host pattern matches subdomains', acHit('github.com', 'https://gist.github.com/x'), true);
+eq('host pattern is not a substring match', acHit('github.com', 'https://notgithub.com/'), false);
+eq('host pattern is not fooled by the path', acHit('github.com', 'https://evil.se/github.com'), false);
+eq('scheme in the pattern is ignored', acHit('https://github.com/', 'https://github.com/x'), true);
+eq('pattern is case-insensitive', acHit('GitHub.com', 'https://GITHUB.com/x'), true);
+eq('wildcard host', acHit('*.atlassian.net', 'https://acme.atlassian.net/jira'), true);
+eq('wildcard host needs the rest to match', acHit('*.atlassian.net', 'https://atlassian.net.evil.se/'), false);
+eq('path prefix matches', acHit('github.com/pulls', 'https://github.com/pulls/x'), true);
+eq('path prefix excludes other paths', acHit('github.com/pulls', 'https://github.com/issues'), false);
+eq('wildcard in the path', acHit('github.com/*/pull/*', 'https://github.com/a/pull/3'), true);
+eq('regex characters in a pattern are literal', acHit('a.b.com', 'https://axb.com/'), false);
+eq('internal pages never match', acHit('extensions', 'edge://extensions/'), false);
+eq('empty and bare-wildcard patterns are refused', [parsePattern(''), parsePattern('*'), parsePattern('https://')], [null, null, null]);
+
+eq('tab older than the rule is due', acDue([acTab(25)], [{ pattern: 'github.com', hours: 24 }]), [1]);
+eq('tab younger than the rule is kept', acDue([acTab(23)], [{ pattern: 'github.com', hours: 24 }]), []);
+eq('other domains are kept', acDue([acTab(99, { url: 'https://x.se/' })], [{ pattern: 'github.com', hours: 24 }]), []);
+eq('pinned, active and audible are kept',
+  acDue([acTab(99, { pinned: true }), acTab(99, { active: true }), acTab(99, { audible: true })].map((x, i) => ({ ...x, id: i + 1 })),
+    [{ pattern: 'github.com', hours: 1 }]), []);
+eq('grouped tabs are kept by default', acDue([acTab(99, { groupId: 5 })], [{ pattern: 'github.com', hours: 1 }]), []);
+eq('grouped tabs go when the option is on', acDue([acTab(99, { groupId: 5 })], [{ pattern: 'github.com', hours: 1 }], { includeGrouped: true }), [1]);
+eq('tabs without a timestamp are kept', acDue([acTab(0, { lastAccessed: undefined })], [{ pattern: 'github.com', hours: 1 }]), []);
+eq('the most specific rule decides',
+  acDue([acTab(30, { url: 'https://github.com/pulls' })],
+    [{ pattern: 'github.com', hours: 24 }, { pattern: 'github.com/pulls', hours: 72 }]), []);
+eq('unusable rules are ignored (empty, zero, too small)',
+  acDue([acTab(99)], [{ pattern: '', hours: 1 }, { pattern: 'github.com', hours: 0 }, { pattern: 'github.com', hours: 0.01 }]), []);
+eq('no rules, nothing due', acDue([acTab(99)], []), []);
+
+const acLog = {};
+const acRemoved = [];
+globalThis.chrome = {
+  i18n: fakeI18n('en'),
+  tabs: {
+    remove: async (id) => { if (id === 2) throw new Error('No tab with id'); acRemoved.push(id); },
+    create: async (c) => acRemoved.push(`open ${c.url}`),
+  },
+  storage: { local: {
+    get: async () => ({ ...acLog }),
+    set: async (o) => void Object.assign(acLog, o),
+  } },
+};
+const acPlan = planAutoClose([acTab(30), acTab(30, { id: 2 }), acTab(30, { id: 3, url: 'https://github.com/c' })], AC_NOW, { rules: [{ pattern: 'github.com', hours: 24 }] });
+const acRes = await applyAutoClose(acPlan, AC_NOW);
+eq('a vanished tab does not stop the rest', [acRes.closed, acRemoved], [2, [1, 3]]);
+eq('only tabs that closed are logged, newest first', acLog.autoClosed.map((e) => e.url), ['https://github.com/c', 'https://github.com/a/b']);
+await reopenAutoClosed(acLog.autoClosed[0]);
+eq('reopening drops the entry from the log', acLog.autoClosed.map((e) => e.url), ['https://github.com/a/b']);
+globalThis.chrome = { i18n: fakeI18n('en') };
+eq('auto-close is off by default', [DEFAULTS.autoClose.enabled, DEFAULTS.autoClose.includeGrouped, DEFAULTS.autoClose.rules], [false, false, []]);
 
 // --- colors
 eq('color is deterministic', colorFor('Code'), colorFor('Code'));

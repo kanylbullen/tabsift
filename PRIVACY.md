@@ -1,6 +1,6 @@
 # Tabsift privacy policy
 
-*English · [Svenska](PRIVACY.sv.md)* · Last updated 2026-11-18
+*English · [Svenska](PRIVACY.sv.md)* · Last updated 2026-11-24
 
 Tabsift is a browser extension for finding, cleaning up and organizing open
 tabs. This page describes all data it handles. Every statement here can be
@@ -26,6 +26,10 @@ account.
 - **The latest cleanup** (URL, window and position of each tab closed), so it
   can be undone. It is deleted when you undo it, when a new cleanup replaces it,
   or the first time you open the palette after the ten-minute undo window.
+
+- **The list of automatically closed tabs** (title, address and time of each,
+  the latest 100), only if you turn on automatic cleanup. It lets you reopen a
+  tab. Clear it in the settings whenever you like.
 
 Removing the extension deletes all of it.
 
