@@ -20,8 +20,24 @@ export function parsePattern(raw) {
   const slash = s.indexOf('/');
   const host = (slash === -1 ? s : s.slice(0, slash)).replace(/\.+$/, '');
   const path = slash === -1 ? '' : s.slice(slash);
-  if (!host || host === '*') return null;
-  return { host, path: path === '/' ? '' : path, source: s };
+  // A host of only `*` and `.` (`*`, `**`, `*.*`) would match every tab.
+  if (!host || /^[*.]+$/.test(host)) return null;
+  return { host: asciiHost(host), path: asciiPath(path === '/' ? '' : path), source: s };
+}
+
+// The browser reports hosts as punycode (xn--…) and paths percent-encoded, so a
+// pattern typed with å, ä or ö has to be turned into the same form to match.
+function asciiHost(host) {
+  if (!/[^\x00-\x7f]/.test(host)) return host;
+  return host.split('.').map((label) => {
+    if (!/[^\x00-\x7f]/.test(label) || label.includes('*')) return label;
+    try { return new URL(`http://${label}`).hostname; } catch { return label; }
+  }).join('.');
+}
+
+function asciiPath(path) {
+  if (!/[^\x00-\x7f]/.test(path)) return path;
+  try { return encodeURI(path).toLowerCase(); } catch { return path; }
 }
 
 const globToRegex = (glob) =>
@@ -97,19 +113,24 @@ export function planAutoClose(tabs, now, opts = {}) {
  */
 export async function applyAutoClose(plan, now = Date.now()) {
   const done = [];
-  for (const { tab, pattern } of plan) {
-    try {
-      await chrome.tabs.remove(tab.id);
-      done.push({ url: tabUrl(tab), title: tab.title || '', at: now, pattern });
-    } catch {
-      // The tab was closed already.
+  try {
+    for (const { tab, pattern } of plan) {
+      try {
+        // The plan may be seconds old: never close what has become active,
+        // pinned or audible since.
+        const current = await chrome.tabs.get(tab.id);
+        if (current.pinned || current.active || current.audible) continue;
+        await chrome.tabs.remove(tab.id);
+        done.push({ id: newId(), url: tabUrl(tab), title: tab.title || '', at: now, pattern });
+      } catch {
+        // The tab was closed already.
+      }
     }
-  }
-  if (done.length) {
-    const { autoClosed = [] } = await chrome.storage.local.get('autoClosed');
-    await chrome.storage.local.set({
-      autoClosed: [...done.reverse(), ...autoClosed].slice(0, LOG_MAX),
-    });
+  } finally {
+    // Log what really closed even if something above threw.
+    if (done.length) {
+      await updateLog((log) => [...done.reverse(), ...log].slice(0, LOG_MAX));
+    }
   }
   return { closed: done.length };
 }
@@ -117,8 +138,21 @@ export async function applyAutoClose(plan, now = Date.now()) {
 /** Reopens one logged tab (in the background) and drops it from the log. */
 export async function reopenAutoClosed(entry) {
   await chrome.tabs.create({ url: entry.url, active: false });
-  const { autoClosed = [] } = await chrome.storage.local.get('autoClosed');
-  await chrome.storage.local.set({
-    autoClosed: autoClosed.filter((e) => !(e.url === entry.url && e.at === entry.at)),
-  });
+  await updateLog((log) => log.filter((e) => e.id !== entry.id));
+}
+
+export const clearAutoClosed = () => updateLog(() => []);
+
+const newId = () =>
+  globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+// The log is changed from the service worker and from the options page, so
+// read-modify-write goes through a lock shared by both.
+async function updateLog(change) {
+  const run = async () => {
+    const { autoClosed = [] } = await chrome.storage.local.get('autoClosed');
+    await chrome.storage.local.set({ autoClosed: change(autoClosed) });
+  };
+  const locks = globalThis.navigator?.locks;
+  return locks ? locks.request('tabsift-autoclosed', run) : run();
 }

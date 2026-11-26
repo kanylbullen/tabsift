@@ -55,12 +55,12 @@ chrome.commands.onCommand.addListener((command) => {
 
 const SWEEP = 'auto-close';
 
-/** Alarms can be lost when the browser restarts, so make sure one exists every
- *  time the worker starts. The first sweep waits a few minutes, which gives
- *  restored tabs time to settle. */
-async function ensureSweepAlarm() {
-  if (!(await chrome.alarms.get(SWEEP))) {
-    chrome.alarms.create(SWEEP, { delayInMinutes: 5, periodInMinutes: 5 });
+/** Make sure the sweep alarm exists whenever the worker starts. On browser
+ *  start `fresh` recreates it, so the first sweep waits a few minutes and the
+ *  restored tabs get time to settle instead of an overdue alarm firing at once. */
+async function ensureSweepAlarm(fresh = false) {
+  if (fresh || !(await chrome.alarms.get(SWEEP))) {
+    await chrome.alarms.create(SWEEP, { delayInMinutes: 5, periodInMinutes: 5 });
   }
 }
 
@@ -78,6 +78,9 @@ chrome.alarms.onAlarm.addListener((alarm) => {
   runAutoClose().catch((err) => console.error('[tabsift] auto-close', err));
 });
 ensureSweepAlarm().catch((err) => console.error('[tabsift] alarm', err));
+chrome.runtime.onStartup.addListener(() => {
+  ensureSweepAlarm(true).catch((err) => console.error('[tabsift] alarm', err));
+});
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === 'install') chrome.runtime.openOptionsPage();

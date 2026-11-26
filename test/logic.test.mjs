@@ -183,7 +183,11 @@ eq('path prefix excludes other paths', acHit('github.com/pulls', 'https://github
 eq('wildcard in the path', acHit('github.com/*/pull/*', 'https://github.com/a/pull/3'), true);
 eq('regex characters in a pattern are literal', acHit('a.b.com', 'https://axb.com/'), false);
 eq('internal pages never match', acHit('extensions', 'edge://extensions/'), false);
-eq('empty and bare-wildcard patterns are refused', [parsePattern(''), parsePattern('*'), parsePattern('https://')], [null, null, null]);
+eq('empty and bare-wildcard patterns are refused',
+  [parsePattern(''), parsePattern('*'), parsePattern('**'), parsePattern('*.*'), parsePattern('**/x'), parsePattern('https://')],
+  [null, null, null, null, null, null]);
+eq('non-ASCII host matches its punycode form', acHit('räksmörgås.se', 'https://xn--rksmrgs-5wao1o.se/'), true);
+eq('non-ASCII path matches its encoded form', acHit('example.com/åäö', 'https://example.com/%C3%A5%C3%A4%C3%B6'), true);
 
 eq('tab older than the rule is due', acDue([acTab(25)], [{ pattern: 'github.com', hours: 24 }]), [1]);
 eq('tab younger than the rule is kept', acDue([acTab(23)], [{ pattern: 'github.com', hours: 24 }]), []);
@@ -206,6 +210,7 @@ const acRemoved = [];
 globalThis.chrome = {
   i18n: fakeI18n('en'),
   tabs: {
+    get: async (id) => ({ id, ...(id === 4 ? { active: true } : {}) }),
     remove: async (id) => { if (id === 2) throw new Error('No tab with id'); acRemoved.push(id); },
     create: async (c) => acRemoved.push(`open ${c.url}`),
   },
@@ -218,8 +223,15 @@ const acPlan = planAutoClose([acTab(30), acTab(30, { id: 2 }), acTab(30, { id: 3
 const acRes = await applyAutoClose(acPlan, AC_NOW);
 eq('a vanished tab does not stop the rest', [acRes.closed, acRemoved], [2, [1, 3]]);
 eq('only tabs that closed are logged, newest first', acLog.autoClosed.map((e) => e.url), ['https://github.com/c', 'https://github.com/a/b']);
+const acTwin = await applyAutoClose([{ tab: acTab(30, { id: 5 }), pattern: 'github.com' }, { tab: acTab(30, { id: 6 }), pattern: 'github.com' }], AC_NOW);
+eq('same-url tabs get separate log entries', [acTwin.closed, acLog.autoClosed.filter((e) => e.url === 'https://github.com/a/b').length], [2, 3]);
 await reopenAutoClosed(acLog.autoClosed[0]);
-eq('reopening drops the entry from the log', acLog.autoClosed.map((e) => e.url), ['https://github.com/a/b']);
+eq('reopening one twin leaves the other', acLog.autoClosed.filter((e) => e.url === 'https://github.com/a/b').length, 2);
+const acActive = await applyAutoClose([{ tab: acTab(30, { id: 4 }), pattern: 'github.com' }], AC_NOW);
+eq('a tab that became active is not closed', acActive.closed, 0);
+acLog.autoClosed = acLog.autoClosed.filter((e) => e.url !== 'https://github.com/a/b');
+await reopenAutoClosed(acLog.autoClosed[0]);
+eq('reopening drops the entry from the log', acLog.autoClosed.map((e) => e.url), []);
 globalThis.chrome = { i18n: fakeI18n('en') };
 eq('auto-close is off by default', [DEFAULTS.autoClose.enabled, DEFAULTS.autoClose.includeGrouped, DEFAULTS.autoClose.rules], [false, false, []]);
 

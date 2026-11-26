@@ -4,7 +4,7 @@ import { MODELS as ANTHROPIC_MODELS } from '../lib/ai/anthropic.js';
 import { listModels as listOllamaModels } from '../lib/ai/ollama.js';
 import { availability as edgeAvailability } from '../lib/ai/edge.js';
 import { t, localizeDocument } from '../lib/i18n.js';
-import { MIN_HOURS, reopenAutoClosed } from '../lib/autoclose.js';
+import { MIN_HOURS, reopenAutoClosed, clearAutoClosed } from '../lib/autoclose.js';
 import { formatAge } from '../lib/tabs.js';
 import { displayHost } from '../lib/urlkey.js';
 
@@ -155,10 +155,12 @@ function readRules() {
   for (const row of $('ac-rules').querySelectorAll('.rule')) {
     const pattern = row.querySelector('.pattern').value.trim();
     if (!pattern) continue; // a row still being typed
-    const hours = Number(row.querySelector('.hours').value);
+    const raw = row.querySelector('.hours').value.trim();
+    // Only an empty or invalid field falls back to a day; 0 is clamped like any small value.
+    const hours = raw !== '' && Number.isFinite(Number(raw)) ? Number(raw) : 24;
     rules.push({
       pattern,
-      hours: Math.max(MIN_HOURS, Math.min(8760, Math.round((hours || 24) * 100) / 100)),
+      hours: Math.max(MIN_HOURS, Math.min(8760, Math.round(hours * 100) / 100)),
     });
   }
   return rules;
@@ -192,14 +194,22 @@ async function renderLog() {
     const reopen = document.createElement('button');
     reopen.type = 'button';
     reopen.textContent = t('opt_ac_reopen');
-    reopen.addEventListener('click', () => void reopenAutoClosed(entry));
+    reopen.addEventListener('click', async () => {
+      reopen.disabled = true;
+      try {
+        await reopenAutoClosed(entry);
+      } catch (err) {
+        console.error('[tabsift] reopen', err);
+        reopen.disabled = false;
+      }
+    });
 
     li.append(what, reopen);
     list.appendChild(li);
   }
 }
 
-$('ac-clear').addEventListener('click', () => chrome.storage.local.remove('autoClosed'));
+$('ac-clear').addEventListener('click', () => void clearAutoClosed());
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area === 'local' && changes.autoClosed) void renderLog();
 });
@@ -236,11 +246,18 @@ async function showEdgeStatus() {
 }
 
 let saveTimer;
-async function persist() {
-  settings = await saveSettings(readForm());
-  clearTimeout(saveTimer);
-  $('saved').hidden = false;
-  saveTimer = setTimeout(() => ($('saved').hidden = true), 1200);
+let ready = false; // saving before the form is filled would overwrite settings with blanks
+let saving = Promise.resolve();
+function persist() {
+  if (!ready) return saving;
+  // One save at a time, so an older snapshot never lands after a newer one.
+  saving = saving.then(async () => {
+    settings = await saveSettings(readForm());
+    clearTimeout(saveTimer);
+    $('saved').hidden = false;
+    saveTimer = setTimeout(() => ($('saved').hidden = true), 1200);
+  }).catch((err) => console.error('[tabsift] save', err));
+  return saving;
 }
 
 // ------------------------------------------------------------------- actions
@@ -330,6 +347,7 @@ for (const el of document.querySelectorAll('input, select')) {
   fillAnthropicModels();
   settings = await getSettings();
   fillForm();
+  ready = true;
   syncPanels();
   await renderLog();
 })();

@@ -200,7 +200,7 @@ _locales/
   en/messages.json       engelska (standard)
   sv/messages.json       svenska
 src/
-  background.js          service worker — bara kortkommandon
+  background.js          service worker — kortkommandon, larm för automatisk rensning
   lib/
     settings.js          storage.local, defaults
     urlkey.js            URL-normalisering för dubbletter
@@ -223,7 +223,7 @@ scripts/
   screenshots/           butiksbilder från den riktiga paletten med påhittade flikar
 store/                   butiksikon, Edge-logga, skärmbilder
 docs/store-listing.md    butikstexter och formulärsvar (på engelska)
-test/logic.test.mjs      test för URL-normalisering, regler, fuzzy, dedupe, inaktiva, omnibox, språk
+test/logic.test.mjs      test för URL-normalisering, regler, fuzzy, dedupe, inaktiva, automatisk rensning, omnibox, språk
 ```
 
 Testerna körs utan beroenden och utan webbläsare:

@@ -204,7 +204,7 @@ _locales/
   en/messages.json       English (default)
   sv/messages.json       Swedish
 src/
-  background.js          service worker — keyboard commands only
+  background.js          service worker — keyboard commands, automatic-cleanup alarm
   lib/
     settings.js          storage.local, defaults
     urlkey.js            URL normalization for duplicates
@@ -227,7 +227,7 @@ scripts/
   screenshots/           store screenshots from the real palette with made-up tabs
 store/                   store icon, Edge logo, screenshots
 docs/store-listing.md    store texts and form answers
-test/logic.test.mjs      tests for URL normalization, rules, fuzzy, dedupe, inactive tabs, omnibox, languages
+test/logic.test.mjs      tests for URL normalization, rules, fuzzy, dedupe, inactive tabs, automatic cleanup, omnibox, languages
 ```
 
 The tests run without dependencies and without a browser:
