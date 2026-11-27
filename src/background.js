@@ -1,11 +1,12 @@
-// Service worker. Only handles keyboard commands — the palette does everything
-// else itself in its own popup context, so there is no message channel to abuse
-// and no state that can go stale.
+// Service worker. Handles keyboard commands and the automatic-cleanup alarm —
+// the palette does everything else itself in its own popup context, so there is
+// no message channel to abuse and no state that can go stale.
 
 import { getSettings } from './lib/settings.js';
 import { queryTabs, planDedupe, applyDedupe, applyGrouping } from './lib/tabs.js';
 import { planGrouping } from './lib/grouping.js';
 import { registerOmnibox } from './lib/omnibox.js';
+import { planAutoClose, applyAutoClose } from './lib/autoclose.js';
 
 // Must be registered synchronously at the top of the module — otherwise the
 // service worker isn't woken when the user types the keyword in the address bar.
@@ -48,6 +49,37 @@ chrome.commands.onCommand.addListener((command) => {
     console.error('[tabsift]', command, err);
     flashBadge('!', '#dc2626');
   });
+});
+
+// ------------------------------------------------------------ automatic cleanup
+
+const SWEEP = 'auto-close';
+
+/** Make sure the sweep alarm exists whenever the worker starts. On browser
+ *  start `fresh` recreates it, so the first sweep waits a few minutes and the
+ *  restored tabs get time to settle instead of an overdue alarm firing at once. */
+async function ensureSweepAlarm(fresh = false) {
+  if (fresh || !(await chrome.alarms.get(SWEEP))) {
+    await chrome.alarms.create(SWEEP, { delayInMinutes: 5, periodInMinutes: 5 });
+  }
+}
+
+async function runAutoClose() {
+  const { autoClose } = await getSettings();
+  if (!autoClose.enabled) return;
+  const tabs = await queryTabs({ allWindows: true });
+  const plan = planAutoClose(tabs, Date.now(), autoClose);
+  await applyAutoClose(plan);
+}
+
+// Registered at the top level so the worker is woken for it.
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name !== SWEEP) return;
+  runAutoClose().catch((err) => console.error('[tabsift] auto-close', err));
+});
+ensureSweepAlarm().catch((err) => console.error('[tabsift] alarm', err));
+chrome.runtime.onStartup.addListener(() => {
+  ensureSweepAlarm(true).catch((err) => console.error('[tabsift] alarm', err));
 });
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {

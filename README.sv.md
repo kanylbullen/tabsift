@@ -56,7 +56,7 @@ Stängningen går att ångra i tio minuter.
 ## Behörigheter
 
 ```json
-"permissions": ["tabs", "tabGroups", "storage"],
+"permissions": ["tabs", "tabGroups", "storage", "alarms"],
 "optional_host_permissions": [
   "http://localhost/*", "http://127.0.0.1/*",
   "https://api.anthropic.com/*", "https://api.openai.com/*"
@@ -67,7 +67,8 @@ Stängningen går att ångra i tio minuter.
 |---|---|
 | `tabs` | Läsa flikars titel och URL. Utan den är allt annat meningslöst. |
 | `tabGroups` | Skapa, namnge och färgsätta grupper. |
-| `storage` | Inställningar och ångra-listan, i `chrome.storage.local`. |
+| `storage` | Inställningar, ångra-listan och loggen över automatisk rensning, i `chrome.storage.local`. |
+| `alarms` | Väcker bakgrundsprocessen var femte minut för automatisk rensning. Ingen installationsvarning. |
 | `commands` | Kortkommandon. Implicit via `manifest.json`. |
 
 Det finns **inga** content scripts, ingen `<all_urls>`, ingen `webRequest`, ingen
@@ -164,6 +165,26 @@ finns inget kortkommando som stänger direkt, utan förhandsvisning.
 Gör den inte det ser alla flikar nyöppnade ut efter omstart, och då föreslås
 färre flikar än väntat. Det blir aldrig fler.
 
+## Så fungerar automatisk rensning
+
+Av som standard. I inställningarna slår du på den och lägger till regler: en
+domän eller ett mönster och ett antal timmar, till exempel `github.com` och 24.
+Var femte minut, medan webbläsaren är öppen, stängs flikar som matchar en regel
+och inte varit aktiva så länge (samma `lastAccessed` som ovan).
+
+- `github.com` matchar den värden och dess underdomäner. `github.com/pulls`
+  matchar bara sökvägar som börjar med `/pulls`. `*` är jokertecken:
+  `*.atlassian.net`.
+- Matchar flera regler avgör den mest specifika (längsta) mönstret.
+- Fästa, aktiva och ljudspelande flikar stängs aldrig. Flikar i en grupp lämnas
+  ifred om du inte bockar i *Stäng även flikar som ligger i en grupp*. Flikar
+  utan tidsstämpel, och allt som inte är en http(s)-sida, rörs aldrig.
+- Varje automatiskt stängd flik hamnar i en lista i inställningarna (de senaste
+  100: titel, adress, när) med en **Öppna igen**-knapp. Tio minuters ångra i
+  paletten gäller bara städningar du startat själv.
+- Första svepet körs fem minuter efter att webbläsaren startat, så att
+  återställda flikar hinner sätta sig. Inget körs medan webbläsaren är stängd.
+
 ## Språk
 
 Tillägget följer webbläsarens språk: svenska om Edge/Chrome körs på svenska,
@@ -179,13 +200,14 @@ _locales/
   en/messages.json       engelska (standard)
   sv/messages.json       svenska
 src/
-  background.js          service worker — bara kortkommandon
+  background.js          service worker — kortkommandon, larm för automatisk rensning
   lib/
     settings.js          storage.local, defaults
     urlkey.js            URL-normalisering för dubbletter
     fuzzy.js             delsekvensmatchning för paletten
     rules.js             domän → kategori
     tabs.js              query, dedupe-plan, inaktiva flikar, gruppapplicering, ångra
+    autoclose.js         mönster, vad som är förfallet, stängning + logg
     grouping.js          regler först, sen AI
     omnibox.js           adressfältssökning bakom nyckelordet `t`
     i18n.js              uppslag i _locales, `kod` och [[tangent]] i texter
@@ -201,7 +223,7 @@ scripts/
   screenshots/           butiksbilder från den riktiga paletten med påhittade flikar
 store/                   butiksikon, Edge-logga, skärmbilder
 docs/store-listing.md    butikstexter och formulärsvar (på engelska)
-test/logic.test.mjs      test för URL-normalisering, regler, fuzzy, dedupe, inaktiva, omnibox, språk
+test/logic.test.mjs      test för URL-normalisering, regler, fuzzy, dedupe, inaktiva, automatisk rensning, omnibox, språk
 ```
 
 Testerna körs utan beroenden och utan webbläsare:

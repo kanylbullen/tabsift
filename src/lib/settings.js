@@ -37,6 +37,14 @@ export const DEFAULTS = {
     allWindows: false,
   },
 
+  // Close tabs by themselves. Off until the user turns it on and adds rules.
+  autoClose: {
+    enabled: false,
+    includeGrouped: false,
+    // [{ pattern: 'github.com', hours: 24 }]
+    rules: [],
+  },
+
   grouping: {
     allWindows: false,
     useRules: true,
